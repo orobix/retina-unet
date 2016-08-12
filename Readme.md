@@ -1,21 +1,21 @@
 # Retina blood vessel segmentation with convolution neural network
 
 This repository contains the implementation of a convolutional neural network used to segment blood vessels in retina fundus images. This is a binary classification task: the neural network predicts if each pixel in the fundus image is either a vessel or not.  
-The neural network structure is derived from the *U-Net*, described in this [paper](https://arxiv.org/pdf/1505.04597.pdf).  
-The performance of this neural network is tested on the DRIVE database, and it achieved the best score in terms of area under the ROC in comparison to the other methods published so far.
+The neural network structure is derived from the *U-Net* architecture, described in this [paper](https://arxiv.org/pdf/1505.04597.pdf).  
+The performance of this neural network is tested on the DRIVE database, and it achieves the best score in terms of area under the ROC in comparison to the other methods published so far.
 
 
 ## Methods
-Before the training, the 20 images of the DRIVE training datasets are pre-processed with the following transformations:
+Before training, the 20 images of the DRIVE training datasets are pre-processed with the following transformations:
 - Gray-scale conversion
 - Standardization
 - Contrast-limited adaptive histogram equalization (CLAHE)
 - Gamma adjustment
 
-The training of the neural network is performed on sub-images (called patches) of the pre-processed full images. Each patch, of dimension 48x48, is obtained by randomly select its center point inside the full image. Also the patches partially or completely outside the FOV are selected, in this way the neural network learns to discriminate the FOV border from the blood vessels.  
-A set of 175000 patches are randomly selected for the training, equally split among the 20 images (8750 patches per image). Although the patches overlap, i.e. different patches may contain same part of the original images, no further data augmentation is performed.
+The training of the neural network is performed on sub-images (patches) of the pre-processed full images. Each patch, of dimension 48x48, is obtained by randomly selecting its center inside the full image. Also the patches partially or completely outside the FOV are selected, in this way the neural network learns how to discriminate the FOV border from blood vessels.
+A set of 175000 patches are randomly selected for training, equally split among the 20 images (8750 patches per image). Although the patches overlap, i.e. different patches may contain same part of the original images, no further data augmentation is performed.
 
-The neural network architecture is derived from the *U-net* concept (see the [paper](https://arxiv.org/pdf/1505.04597.pdf)). Compared to the original design, in this case all the patch pixels are labeled and compared to the ground truth, not only the patch center.
+The neural network architecture is derived from the *U-net* architecture (see the [paper](https://arxiv.org/pdf/1505.04597.pdf)).
 The loss function is the cross-entropy and the stochastic gradient descent is employed. The activation function after each convolutional layer is the Rectifier Linear Unit (ReLU), and a dropout of 0.2 is inserted between two consecutive convolutional layers.  
 The training is performed for 150 epochs, with a mini-batch size of 32 patches. After each epoch, the model is validated against all patches (no overlap) forming the 20 images of the DRIVE testing dataset, after they have been pre-processed in the same way as for the training images.
 
