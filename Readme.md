@@ -1,4 +1,6 @@
-# Retina blood vessel segmentation with convolution neural network
+# Retina blood vessel segmentation with a convolution neural network (U-net)
+
+![](test/test_Original_GroundTruth_Prediction_3.png)
 
 This repository contains the implementation of a convolutional neural network used to segment blood vessels in retina fundus images. This is a binary classification task: the neural network predicts if each pixel in the fundus image is either a vessel or not.  
 The neural network structure is derived from the *U-Net* architecture, described in this [paper](https://arxiv.org/pdf/1505.04597.pdf).  
