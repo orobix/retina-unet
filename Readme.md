@@ -156,9 +156,13 @@ The following files will be saved in the folder with same name of the experiment
 
 All the results are referred only to the pixels belonging to the FOV, selected by the masks included in the DRIVE database
 
+## Acknowledgements
+
+This work was supported by the EU Marie Curie Initial Training Network (ITN) “REtinal VAscular Modelling, Measurement And Diagnosis" (REVAMMAD), Project no. 316990.
 
 ## License
 
 This project is licensed under the MIT License 
 
 Copyright Daniele Cortinovis, Orobix Srl (www.orobix.com).
+
