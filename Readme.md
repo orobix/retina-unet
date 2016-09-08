@@ -4,7 +4,7 @@
 
 This repository contains the implementation of a convolutional neural network used to segment blood vessels in retina fundus images. This is a binary classification task: the neural network predicts if each pixel in the fundus image is either a vessel or not.  
 The neural network structure is derived from the *U-Net* architecture, described in this [paper](https://arxiv.org/pdf/1505.04597.pdf).  
-The performance of this neural network is tested on the DRIVE database, and it achieves the best score in terms of area under the ROC in comparison to the other methods published so far.
+The performance of this neural network is tested on the DRIVE database, and it achieves the best score in terms of area under the ROC curve in comparison to the other methods published so far.
 
 
 ## Methods
@@ -14,39 +14,66 @@ Before training, the 20 images of the DRIVE training datasets are pre-processed 
 - Contrast-limited adaptive histogram equalization (CLAHE)
 - Gamma adjustment
 
-The training of the neural network is performed on sub-images (patches) of the pre-processed full images. Each patch, of dimension 48x48, is obtained by randomly selecting its center inside the full image. Also the patches partially or completely outside the FOV are selected, in this way the neural network learns how to discriminate the FOV border from blood vessels.
+The training of the neural network is performed on sub-images (patches) of the pre-processed full images. Each patch, of dimension 48x48, is obtained by randomly selecting its center inside the full image. Also the patches partially or completely outside the Field Of View (FOV) are selected, in this way the neural network learns how to discriminate the FOV border from blood vessels.
 A set of 175000 patches are randomly selected for training, equally split among the 20 images (8750 patches per image). Although the patches overlap, i.e. different patches may contain same part of the original images, no further data augmentation is performed.
 
 The neural network architecture is derived from the *U-net* architecture (see the [paper](https://arxiv.org/pdf/1505.04597.pdf)).
-The loss function is the cross-entropy and stochastic gradient descent is employed for optimization. The activation function after each convolutional layer is the Rectifier Linear Unit (ReLU), and a dropout of 0.2 is used between two consecutive convolution layers.
-Training is performed for 150 epochs, with a mini-batch size of 32 patches. After each epoch, the model is validated against all patches (no overlap) extracted from the 20 images of the DRIVE testing dataset, after they have been pre-processed in the same way as for training images.
+The loss function is the cross-entropy and the stochastic gradient descent is employed for optimization. The activation function after each convolutional layer is the Rectifier Linear Unit (ReLU), and a dropout of 0.2 is used between two consecutive convolution layers.
+Training is performed for 150 epochs, with a mini-batch size of 32 patches. After each epoch, the model is validated against all patches (no overlap) extracted from the 20 images of the DRIVE testing dataset, after they have been pre-processed in the same way as for the training images.
 
 
 ## Results
-Testing is performed with the 20 images of the DRIVE testing dataset, using the gold standard as ground truth.  
-The results reported in the `./test` folder are referred to the trained model which reported the minimum validation loss. Only the pixels belonging to the FOV are considered. The FOV is identified with the masks included in the DRIVE database.
-
+Testing is performed with the 20 images of the DRIVE testing dataset, using the gold standard as ground truth. Only the pixels belonging to the FOV are considered. The FOV is identified with the masks included in the DRIVE database.  
 In order to improve performance, the vessel probability of each pixel is obtained by averaging multiple predictions. With a stride of 5 pixels in both height and width, multiple consecutive overlapping patches are extracted in each testing image. Finally, for each pixel, the vessel probability is obtained by averaging probabilities over all the predicted patches covering the pixel.
 
-The files `test_Original_GroundTruth_PredictionX.png` show, from top to bottom, the original pre-processed image, the ground truth and the prediction. In the predicted image, each pixel shows the vessel predicted probability, no threshold is applied.
+The results reported in the `./test` folder are referred to the trained model which reported the minimum validation loss. The `./test` folder includes:
+- Model:
+  - `test_model.png` schematic representation of the neural network
+  - `test_architecture.json` description of the model in json format
+  - `test_best_weights.h5` weights of the model which reported the minimum validation loss, as HDF5 file
+  - `test_last_weights.h5`  weights of the model at last epoch (150th), as HDF5 file
+  - `test_configuration.txt` configuration of the parameters of the experiment
+- Experiment results:
+  - `Precision_recall.png` the precison-recall plot and the corresponding Area Under the Curve (AUC)
+  - `ROC.png` the Receiver Operating Characteristic (ROC) curve and the corresponding AUC
+  - `all_*.png` the 20 images of the pre-processed originals, ground truth and predictions relative to the DRIVE testing dataset
+  - `sample_*.png` sample of 40 patches of the pre-processed original images and the corresponding ground truth from the training and testing DRIVE dataset
+  - `test_Original_GroundTruth_Prediction*.png` from top to bottom, the original pre-processed image, the ground truth and the prediction. In the predicted image, each pixel shows the vessel predicted probability, no threshold is applied.
 
-The following table compares the area under the ROC curve (AUC ROC) to other methods published so far:
 
-| Tables              | AUC ROC on DRIVE |
-| --------------------|:----------------:|
-| Jiang et al         | .9327            |
-| Soares et al        | .9614            |   
-| Osareh et al        | .9650            |    
-| Azzopardi et al.    | .9614            |
-| Roychowdhury et al. | .9670            |
-| Fraz et al.         | .9747            |
-| Qiaoliang et al.    | .9738            |
-| Melinscak et al.    | .9749            |
-| Liskowski et al.^   | .9790            |
-| **this method**    | **.9791**        |
+The following table compares this method to other recent techniques, which have published their performance in terms of Area Under the ROC curve (AUC ROC) on the DRIVE dataset.
+
+| Method                  | AUC ROC on DRIVE |
+| ----------------------- |:----------------:|
+| Soares et al [1]        | .9614            |
+| Azzopardi et al. [2]    | .9614            |
+| Osareh et al  [3]       | .9650            |
+| Roychowdhury et al. [4] | .9670            |
+| Fraz et al.  [5]        | .9747            |
+| Qiaoliang et al. [6]    | .9738            |
+| Melinscak et al. [7]    | .9749            |
+| Liskowski et al.^ [8]   | .9790            |
+| **this method**         | **.9791**        |
 
 ^ different definition of FOV
 
+[1] Soares et al., “Retinal vessel segmentation using the 2-d Gabor wavelet and supervised classification,” *Medical Imaging, IEEE Transactions on*, vol. 25, no. 9, pp. 1214–1222, 2006.
+
+[2] Azzopardi et al., “Trainable cosfire filters for vessel delineation with application to retinal images,”
+*Medical image analysis*, vol. 19, no. 1, pp. 46–57, 2015.
+
+[3] Osareh et al., “Automatic blood vessel segmentation in color images of retina,” *Iran. J. Sci. Technol. Trans. B: Engineering*, vol. 33, no. B2, pp. 191–206, 2009.
+
+[4] Roychowdhury et al., “Blood vessel segmentation of fundus images by major vessel extraction and subimage
+classification,” *Biomedical and Health Informatics, IEEE Journal of*, vol. 19, no. 3, pp. 1118–1128, 2015.
+
+[5] Fraz et al., "An Ensemble Classification-Based Approach Applied to Retinal Blood Vessel Segmentation",   *IEEE Transactions on Biomedical Engineering*, vol. 59, no. 9, pp. 2538-2548, 2012.
+
+[6] Qiaoliang et al., "A Cross-Modality Learning Approach for Vessel Segmentation in Retinal Images", *IEEE Transactions on Medical Imaging*, vol. 35, no. 1, pp. 109-118, 2016.
+
+[7] Melinscak et al., "Retinal vessel segmentation using deep neural networks", *In Proceedings of the 10th International Conference on Computer Vision Theory and Applications (VISIGRAPP 2015)*, (2015), pp. 577–582.
+
+[8] Liskowski et al., "Segmenting Retinal Blood Vessels with Deep Neural Networks",  *IEEE Transactions on Medical Imaging*, vol. PP, no. 99, pp. 1-1, 2016.
 
 ## Running the experiment on DRIVE
 The code is written in Python, it is possible to replicate the experiment on the DRIVE database by following the guidelines below.
@@ -90,27 +117,27 @@ In the root folder, just run:
 ```
 python prepare_datasets_DRIVE.py
 ```
-The HDF5 datasets for training and testing will be created in the folder `./DRIVE_datasets_training_testing/`
-N.B: If you gave a different name for the DRIVE folder, you need to specify it in `the prepare_datasets_DRIVE.py` file.
+The HDF5 datasets for training and testing will be created in the folder `./DRIVE_datasets_training_testing/`.  
+N.B: If you gave a different name for the DRIVE folder, you need to specify it in the `prepare_datasets_DRIVE.py` file.
 
 Now we can configure the experiment. All the settings can be specified in the file `configuration.txt`, organized in the following sections:  
 **[data paths]**  
-Change these paths only if you have modified the `prepare_datasets_DRIVE.py` file.
+Change these paths only if you have modified the `prepare_datasets_DRIVE.py` file.  
 **[experiment name]**  
 Choose a name for the experiment, a folder with the same name will be created and will contain all the results and the trained neural networks.  
 **[data attributes]**  
-The network is trained on sub-images (patches) of the original full images, specify here the dimension of the patches.   
-**[training settings]**
+The network is trained on sub-images (patches) of the original full images, specify here the dimension of the patches.  
+**[training settings]**  
 Here you can specify:  
-- *N_subimgs*: total number of patches randomly extracted from the original full images. This number must be a multiple of 20, since an equal number of images is extracted in each of the 20 original training images.
-- *inside_FOV*: choose if the patches must be selected inside the Field Of View (FOV), i.e. they don't contain the border mask. The neural network correctly learns how to exclude the FOV border if also the patches in the border mask are included. However, a higher number of patches are required for training.
+- *N_subimgs*: total number of patches randomly extracted from the original full images. This number must be a multiple of 20, since an equal number of patches is extracted in each of the 20 original training images.
+- *inside_FOV*: choose if the patches must be selected only completely inside the FOV. The neural network correctly learns how to exclude the FOV border if also the patches including the mask are selected. However, a higher number of patches are required for training.
 - *N_epochs*: number of training epochs.
 - *batch_size*: mini batch size.
-- *full_images_to_test*: number of full images for validation, max 20. The testing dataset is used also for validation during training, the full images are divided in patches, but not randomly and with no overlap.
+- *full_images_to_test*: number of full images for validation, max 20. The testing dataset is used also for validation during training: the full images are divided in patches, but not randomly and with no overlap.
 - *nohup*: the standard output during the training is redirected and saved in a log file.
 
 
-After all the parameters have been configured, you can train the network with:
+After all the parameters have been configured, you can train the neural network with:
 ```
 python run_training.py
 ```
@@ -119,8 +146,8 @@ The following files will be saved in the folder with the same name of the experi
 - model architecture (json)
 - picture of the model structure (png)
 - a copy of the configuration file
-- model weights at last epoch (hdf5)
-- model weights at best epoch (hdf5)
+- model weights at last epoch (HDF5)
+- model weights at best epoch, i.e. minimum validation loss (HDF5)
 - sample of the training patches and their corresponding ground truth (png)
 - sample of the testing patches and their corresponding ground truth (png)
 
@@ -128,9 +155,9 @@ The following files will be saved in the folder with the same name of the experi
 ### Evaluate the trained model
 The performance of the trained model is evaluated against the DRIVE testing dataset, consisting of 20 images (as many as in the training set).
 
-The parameters for the testing can be tuned again in the `configuration.txt` file, specifically in the [testing settings] section, as described below: 
+The parameters for the testing can be tuned again in the `configuration.txt` file, specifically in the [testing settings] section, as described below:  
 **[testing settings]**  
-- *best_last*: choose the model for prediction on the testing dataset: best = the model with the lowest loss obtained during the training; last = the model at the last epoch.
+- *best_last*: choose the model for prediction on the testing dataset: best = the model with the lowest validation loss obtained during the training; last = the model at the last epoch.
 - *full_images_to_test*: number of full images for testing, max 20.
 - *N_group_visual*: choose how many images per row in the saved figures.
 - *average_mode*: if true, the predicted vessel probability for each pixel is computed by averaging the predicted probability over multiple overlapping patches covering the same pixel.
@@ -138,7 +165,7 @@ The parameters for the testing can be tuned again in the `configuration.txt` fil
 - *stride_width*: same as stride_height.
 - *nohup*: the standard output during the prediction is redirected and saved in a log file.
 
-The section **[experiment name]** must be the name of the experiment you want to test, while **[data paths]** contains the paths to the testing datasets. The section **[training settings]** will be ignored.
+The section **[experiment name]** must be the name of the experiment you want to test, while **[data paths]** contains the paths to the testing datasets. Now the section **[training settings]** will be ignored.
 
 Run testing by:
 ```
@@ -162,7 +189,6 @@ This work was supported by the EU Marie Curie Initial Training Network (ITN) “
 
 ## License
 
-This project is licensed under the MIT License 
+This project is licensed under the MIT License
 
-Copyright Daniele Cortinovis, Orobix Srl (www.orobix.com).
-
+Copyright (c) 2016 Daniele Cortinovis, Orobix Srl (www.orobix.com).
