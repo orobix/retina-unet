@@ -84,12 +84,9 @@ batch_size = int(config.get('training settings', 'batch_size'))
 
 
 #============ Load the data and divided in patches
-patches_imgs_train, patches_masks_train, patches_imgs_test, patches_masks_test = get_data_training(
+patches_imgs_train, patches_masks_train = get_data_training(
     DRIVE_train_imgs_original = path_data + config.get('data paths', 'train_imgs_original'),
     DRIVE_train_groudTruth = path_data + config.get('data paths', 'train_groundTruth'),  #masks
-    DRIVE_test_imgs_original = path_data + config.get('data paths', 'test_imgs_original'),  #original
-    DRIVE_test_groudTruth = path_data + config.get('data paths', 'test_groundTruth'),  #masks
-    Imgs_to_test = int(config.get('training settings', 'full_images_to_test')),
     patch_height = int(config.get('data attributes', 'patch_height')),
     patch_width = int(config.get('data attributes', 'patch_width')),
     N_subimgs = int(config.get('training settings', 'N_subimgs')),
@@ -101,8 +98,6 @@ patches_imgs_train, patches_masks_train, patches_imgs_test, patches_masks_test =
 N_sample = min(patches_imgs_train.shape[0],40)
 visualize(group_images(patches_imgs_train[0:N_sample,:,:,:],5),'./'+name_experiment+'/'+"sample_input_imgs")#.show()
 visualize(group_images(patches_masks_train[0:N_sample,:,:,:],5),'./'+name_experiment+'/'+"sample_input_masks")#.show()
-visualize(group_images(patches_imgs_test[0:N_sample,:,:,:],5),'./'+name_experiment+'/'+"sample_test_imgs")#.show()
-visualize(group_images(patches_masks_test[0:N_sample,:,:,:],5),'./'+name_experiment+'/'+"sample_test_masks")#.show()
 
 
 #=========== Construct and save the model arcitecture =====
@@ -131,7 +126,8 @@ checkpointer = ModelCheckpoint(filepath='./'+name_experiment+'/'+name_experiment
 #
 # lrate_drop = LearningRateScheduler(step_decay)
 
-model.fit(patches_imgs_train, masks_Unet(patches_masks_train), nb_epoch=N_epochs, batch_size=batch_size, verbose=2, shuffle=True, validation_data=(patches_imgs_test, masks_Unet(patches_masks_test)), callbacks=[checkpointer])
+
+model.fit(patches_imgs_train, masks_Unet(patches_masks_train), nb_epoch=N_epochs, batch_size=batch_size, verbose=2, shuffle=True, validation_split=0.1, callbacks=[checkpointer])
 
 
 #========== Save and test the last model ===================

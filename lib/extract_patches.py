@@ -13,53 +13,41 @@ from pre_processing import my_PreProc
 # random.seed(10)
 
 #Load the original data and return the extracted patches for training/testing
-def get_data_training(DRIVE_train_imgs_original,DRIVE_train_groudTruth, DRIVE_test_imgs_original, DRIVE_test_groudTruth, Imgs_to_test, patch_height, patch_width, N_subimgs, inside_FOV):
+def get_data_training(DRIVE_train_imgs_original,
+                      DRIVE_train_groudTruth,
+                      patch_height,
+                      patch_width,
+                      N_subimgs,
+                      inside_FOV):
     train_imgs_original = load_hdf5(DRIVE_train_imgs_original)
     train_masks = load_hdf5(DRIVE_train_groudTruth) #masks always the same
     # visualize(group_images(train_imgs_original[0:20,:,:,:],5),'imgs_train')#.show()  #check original imgs train
-    ### test
-    test_imgs_original = load_hdf5(DRIVE_test_imgs_original)
-    # visualize(group_images(test_imgs_original[0:20,:,:,:],5),'imgs_test')   #check original imgs test
-    test_masks = load_hdf5(DRIVE_test_groudTruth)
 
 
     train_imgs = my_PreProc(train_imgs_original)
-    test_imgs = my_PreProc(test_imgs_original)
     train_masks = train_masks/255.
-    test_masks = test_masks/255.
 
     train_imgs = train_imgs[:,:,9:574,:]  #cut bottom and top so now it is 565*565
     train_masks = train_masks[:,:,9:574,:]  #cut bottom and top so now it is 565*565
-    test_imgs = test_imgs[:Imgs_to_test,:,9:574,:]  #cut bottom and top so now it is 565*565
-    test_masks = test_masks[:Imgs_to_test,:,9:574,:]  #cut bottom and top so now it is 565*565
-
     data_consistency_check(train_imgs,train_masks)
-    data_consistency_check(test_imgs, test_masks)
 
     #check masks are within 0-1
-    assert(np.max(train_masks)==1 and np.max(test_masks)==1)
-    assert(np.min(train_masks)==0 and np.min(test_masks)==0)
+    assert(np.min(train_masks)==0 and np.max(train_masks)==1)
 
-    print "\ntrain/test images/masks shape:"
+    print "\ntrain images/masks shape:"
     print train_imgs.shape
     print "train images range (min-max): " +str(np.min(train_imgs)) +' - '+str(np.max(train_imgs))
-    print "test images range (min-max): " +str(np.min(test_imgs)) +' - '+str(np.max(test_imgs))
-    print "train/test masks are within 0-1\n"
+    print "train masks are within 0-1\n"
 
     #extract the TRAINING patches from the full images
     patches_imgs_train, patches_masks_train = extract_random(train_imgs,train_masks,patch_height,patch_width,N_subimgs,inside_FOV)
     data_consistency_check(patches_imgs_train, patches_masks_train)
-    #extract the TEST patches from the full images
-    patches_imgs_test = extract_ordered(test_imgs,patch_height,patch_width)
-    patches_masks_test = extract_ordered(test_masks,patch_height,patch_width)
-    data_consistency_check(patches_imgs_test, patches_masks_test)
 
-    print "\ntrain/test PATCHES images/masks shape:"
+    print "\ntrain PATCHES images/masks shape:"
     print patches_imgs_train.shape
     print "train PATCHES images range (min-max): " +str(np.min(patches_imgs_train)) +' - '+str(np.max(patches_imgs_train))
-    print "test PATCHES images range (min-max): " +str(np.min(patches_imgs_test)) +' - '+str(np.max(patches_imgs_test))
 
-    return patches_imgs_train, patches_masks_train, patches_imgs_test, patches_masks_test
+    return patches_imgs_train, patches_masks_train#, patches_imgs_test, patches_masks_test
 
 
 #Load the original data and return the extracted patches for training/testing
@@ -285,7 +273,7 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     print "N_patches_img: " +str(N_patches_img)
     assert (preds.shape[0]%N_patches_img==0)
     N_full_imgs = preds.shape[0]//N_patches_img
-    print "According to the dimesions inserted, there are " +str(N_full_imgs) +" full images (of " +str(img_h)+"x" +str(img_w) +" each)"
+    print "According to the dimension inserted, there are " +str(N_full_imgs) +" full images (of " +str(img_h)+"x" +str(img_w) +" each)"
     full_prob = np.zeros((N_full_imgs,preds.shape[1],img_h,img_w))  #itialize to zero mega array with sum of Probabilities
     full_sum = np.zeros((N_full_imgs,preds.shape[1],img_h,img_w))
 

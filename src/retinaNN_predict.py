@@ -203,13 +203,21 @@ for i in range(y_scores.shape[0]):
         y_pred[i]=0
 confusion = confusion_matrix(y_true, y_pred)
 print confusion
-accuracy = float(confusion[0,0]+confusion[1,1])/float(np.sum(confusion))
+accuracy = 0
+if float(np.sum(confusion))!=0:
+    accuracy = float(confusion[0,0]+confusion[1,1])/float(np.sum(confusion))
 print "Global Accuracy: " +str(accuracy)
-specificity = float(confusion[0,0])/float(confusion[0,0]+confusion[0,1])
+specificity = 0
+if float(confusion[0,0]+confusion[0,1])!=0:
+    specificity = float(confusion[0,0])/float(confusion[0,0]+confusion[0,1])
 print "Specificity: " +str(specificity)
-sensitivity = float(confusion[1,1])/float(confusion[1,1]+confusion[1,0])
+sensitivity = 0
+if float(confusion[1,1]+confusion[1,0])!=0:
+    sensitivity = float(confusion[1,1])/float(confusion[1,1]+confusion[1,0])
 print "Sensitivity: " +str(sensitivity)
-precision = float(confusion[1,1])/float(confusion[1,1]+confusion[0,1])
+precision = 0
+if float(confusion[1,1]+confusion[0,1])!=0:
+    precision = float(confusion[1,1])/float(confusion[1,1]+confusion[0,1])
 print "Precision: " +str(precision)
 
 #Jaccard similarity index
