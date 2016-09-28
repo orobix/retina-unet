@@ -4,7 +4,7 @@
 #
 ##################################################
 
-import os
+import os, sys
 import ConfigParser
 
 
@@ -16,15 +16,23 @@ config.readfp(open(r'./configuration.txt'))
 name_experiment = config.get('experiment name', 'name')
 nohup = config.getboolean('training settings', 'nohup')   #std output on log file?
 
-run_GPU = ' THEANO_FLAGS=device=gpu,floatX=float32 '
+run_GPU = '' if sys.platform == 'win32' else ' THEANO_FLAGS=device=gpu,floatX=float32 '
 
 #create a folder for the results
 result_dir = name_experiment
 print "\n1. Create directory for the results (if not already existing)"
-os.system('mkdir -p ' +result_dir)
+if os.path.exists(result_dir):
+    print "Dir already existing"
+elif sys.platform=='win32':
+    os.system('mkdir ' + result_dir)
+else:
+    os.system('mkdir -p ' +result_dir)
 
 print "copy the configuration file in the results folder"
-os.system('cp configuration.txt ./' +name_experiment+'/'+name_experiment+'_configuration.txt')
+if sys.platform=='win32':
+    os.system('copy configuration.txt .\\' +name_experiment+'\\'+name_experiment+'_configuration.txt')
+else:
+    os.system('cp configuration.txt ./' +name_experiment+'/'+name_experiment+'_configuration.txt')
 
 # run the experiment
 if nohup:
