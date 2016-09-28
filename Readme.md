@@ -81,7 +81,9 @@ The code is written in Python, it is possible to replicate the experiment on the
 
 
 ### Prerequisities
-The neural network is developed with the Keras library, we refer to the [Keras library](https://github.com/fchollet/keras) for the installation.
+The neural network is developed with the Keras library, we refer to the [Keras repository](https://github.com/fchollet/keras) for the installation.
+
+This code has been tested with Keras 1.1.0, using either Theano or TensorFlow as backend. In order to avoid dimensions mismatch, it is important to set `"image_dim_ordering": "th"` in the `~/.keras/keras.json` configuration file. If this file isn't there, you can create it. See the Keras documentation for more details.
 
 The following dependencies are needed:
 - numpy >= 1.11.1
