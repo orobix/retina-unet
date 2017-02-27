@@ -175,7 +175,7 @@ def extract_random(full_imgs,full_masks, patch_h,patch_w, N_patches, inside=True
 def is_patch_inside_FOV(x,y,img_w,img_h,patch_h):
     x_ = x - int(img_w/2) # origin (0,0) shifted to image center
     y_ = y - int(img_h/2)  # origin (0,0) shifted to image center
-    R_inside = 270 - int(patch_h*1.42) #radius is 270 (from DRIVE db docs), minus the patch diagonal (assumed it is a square #this is the limit to contain the full patch in the FOV
+    R_inside = 270 - int(patch_h/1.42) #radius is 270 (from DRIVE db docs), minus the patch diagonal (assumed it is a square #this is the limit to contain the full patch in the FOV
     radius = np.sqrt((x_*x_)+(y_*y_))
     if radius < R_inside:
         return True
