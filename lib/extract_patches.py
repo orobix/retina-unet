@@ -360,8 +360,6 @@ def pred_only_FOV(data_imgs,data_masks,original_imgs_border_masks):
                     new_pred_masks.append(data_masks[i,:,y,x])
     new_pred_imgs = np.asarray(new_pred_imgs)
     new_pred_masks = np.asarray(new_pred_masks)
-    new_pred_imgs = np.reshape(new_pred_imgs,(new_pred_imgs.shape[0]))
-    new_pred_masks = np.reshape(new_pred_masks,(new_pred_masks.shape[0]))
     return new_pred_imgs, new_pred_masks
 
 #function to set to black everything outside the FOV, in a full image

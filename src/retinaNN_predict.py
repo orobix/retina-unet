@@ -116,7 +116,7 @@ print "predicted images size :"
 print predictions.shape
 
 #===== Convert the prediction arrays in corresponding images
-pred_patches = pred_to_imgs(predictions,"original")
+pred_patches = pred_to_imgs(predictions, patch_height, patch_width, "original")
 
 
 
