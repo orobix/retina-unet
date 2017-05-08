@@ -75,7 +75,8 @@ def get_datasets(imgs_dir,groundTruth_dir,borderMasks_dir,train_test="null"):
     assert(border_masks.shape == (Nimgs,1,height,width))
     return imgs, groundTruth, border_masks
 
-
+if not os.path.exists(dataset_path):
+    os.makedirs(dataset_path)
 #getting the training datasets
 imgs_train, groundTruth_train, border_masks_train = get_datasets(original_imgs_train,groundTruth_imgs_train,borderMasks_imgs_train,"train")
 print "saving train datasets"
