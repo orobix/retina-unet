@@ -320,7 +320,7 @@ def recompone(data,N_h,N_w):
     return full_recomp
 
 
-#Extend the full images becasue patch divison is not exact
+#Extend the full images because patch divison is not exact
 def paint_border(data,patch_h,patch_w):
     assert (len(data.shape)==4)  #4D arrays
     assert (data.shape[1]==1 or data.shape[1]==3)  #check the channel is 1 or 3
