@@ -63,7 +63,7 @@ def get_unet(n_ch,patch_height,patch_width):
     ############
     conv7 = core.Activation('softmax')(conv6)
 
-    model = Model(input=inputs, output=conv7)
+    model = Model(inputs=inputs, outputs=conv7)
 
     # sgd = SGD(lr=0.01, decay=1e-6, momentum=0.3, nesterov=False)
     model.compile(optimizer='sgd', loss='categorical_crossentropy',metrics=['accuracy'])
