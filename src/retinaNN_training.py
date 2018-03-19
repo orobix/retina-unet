@@ -16,7 +16,7 @@ from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, UpSampling2D,
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras import backend as K
-from keras.utils.visualize_util import plot
+from keras.utils.vis_utils import plot_model as plot
 from keras.optimizers import SGD
 
 import sys
