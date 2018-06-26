@@ -194,7 +194,7 @@ plt.savefig(path_experiment+"Precision_recall.png")
 
 #Confusion matrix
 threshold_confusion = 0.5
-print "\nConfusion matrix:  Costum threshold (for positive) of " +str(threshold_confusion)
+print "\nConfusion matrix:  Custom threshold (for positive) of " +str(threshold_confusion)
 y_pred = np.empty((y_scores.shape[0]))
 for i in range(y_scores.shape[0]):
     if y_scores[i]>=threshold_confusion:
