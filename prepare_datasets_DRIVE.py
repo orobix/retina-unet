@@ -61,6 +61,8 @@ def get_datasets(imgs_dir,groundTruth_dir,borderMasks_dir,train_test="null"):
             b_mask = Image.open(borderMasks_dir + border_masks_name)
             border_masks[i] = np.asarray(b_mask)
 
+    print(imgs.shape)
+    print(groundTruth.shape)
     print ("imgs max: " +str(np.max(imgs)))
     print ("imgs min: " +str(np.min(imgs)))
     assert(np.max(groundTruth)==255 and np.max(border_masks)==255)
