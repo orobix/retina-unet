@@ -193,7 +193,7 @@ plt.legend(loc="lower right")
 plt.savefig(path_experiment+"Precision_recall.png")
 
 #Confusion matrix
-threshold_confusion = 0.5
+threshold_confusion = 0.4
 print ("\nConfusion matrix:  Custom threshold (for positive) of " +str(threshold_confusion))
 y_pred = np.empty((y_scores.shape[0]))
 for i in range(y_scores.shape[0]):

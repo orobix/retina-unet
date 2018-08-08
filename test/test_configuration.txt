@@ -28,7 +28,7 @@ inside_FOV = False
 N_epochs = 150
 batch_size = 32
 #if running with nohup
-nohup = True
+nohup = False
 
 
 [testing settings]
