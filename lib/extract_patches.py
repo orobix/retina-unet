@@ -278,19 +278,27 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     full_sum = np.zeros((N_full_imgs,preds.shape[1],img_h,img_w))
 
     k = 0 #iterator over all the patches
+  
     for i in range(N_full_imgs):
         for h in range((img_h-patch_h)//stride_h+1):
             for w in range((img_w-patch_w)//stride_w+1):
-                full_prob[i,:,h*stride_h:(h*stride_h)+patch_h,w*stride_w:(w*stride_w)+patch_w]+=preds[k]
-                full_sum[i,:,h*stride_h:(h*stride_h)+patch_h,w*stride_w:(w*stride_w)+patch_w]+=1
-                k+=1
+                for l in range (0,patch_h):
+                    for m in range (0,patch_w):
+                        rand=random.uniform(0,1)
+                        if full_prob[i,:,h*stride_h+l,w*stride_w+m]==0 or rand>0.5:
+                            full_prob[i,:,h*stride_h+l,w*stride_w+m]=preds[k][0][l][m]
+                k+=1             
+              
+               # full_prob[i,:,h*stride_h:(h*stride_h)+patch_h,w*stride_w:(w*stride_w)+patch_w]+=preds[k]
+               # full_sum[i,:,h*stride_h:(h*stride_h)+patch_h,w*stride_w:(w*stride_w)+patch_w]+=1
+               # k+=1
     assert(k==preds.shape[0])
-    assert(np.min(full_sum)>=1.0)  #at least one
-    final_avg = full_prob/full_sum
-    print (final_avg.shape)
-    assert(np.max(final_avg)<=1.0) #max value for a pixel is 1.0
-    assert(np.min(final_avg)>=0.0) #min value for a pixel is 0.0
-    return final_avg
+    #assert(np.min(full_sum)>=1.0)  #at least one
+    #final_avg = full_prob/full_sum
+    print (full_prob.shape)
+    assert(np.max(full_prob)<=1.0) #max value for a pixel is 1.0
+    assert(np.min(full_prob)>=0.0) #min value for a pixel is 0.0
+    return full_prob
 
 
 #Recompone the full images with the patches
