@@ -285,8 +285,12 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
                 for l in range (0,patch_h):
                     for m in range (0,patch_w):
                         rand=random.uniform(0,1)
-                        if full_prob[i,:,h*stride_h+l,w*stride_w+m]==0 or rand>0.5:
+                        if full_prob[i,:,h*stride_h+l,w*stride_w+m]==0:
                             full_prob[i,:,h*stride_h+l,w*stride_w+m]=preds[k][0][l][m]
+                            full_sum[i,:,h*stride_h+l,w*stride_w+m]+=1
+                        elif full_prob[i,:,h*stride_h+l,w*stride_w+m]>0 and rand<1/full_sum[i,:,h*stride_h+l,w*stride_w+m]:
+                            full_prob[i,:,h*stride_h+l,w*stride_w+m]=preds[k][0][l][m]
+                            full_sum[i,:,h*stride_h+l,w*stride_w+m]+=1
                 k+=1             
               
                # full_prob[i,:,h*stride_h:(h*stride_h)+patch_h,w*stride_w:(w*stride_w)+patch_w]+=preds[k]
