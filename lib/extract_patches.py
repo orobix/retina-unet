@@ -1,6 +1,6 @@
 import numpy as np
 import random
-import ConfigParser
+import configparser
 
 from help_functions import load_hdf5
 from help_functions import visualize
@@ -34,18 +34,18 @@ def get_data_training(DRIVE_train_imgs_original,
     #check masks are within 0-1
     assert(np.min(train_masks)==0 and np.max(train_masks)==1)
 
-    print "\ntrain images/masks shape:"
-    print train_imgs.shape
-    print "train images range (min-max): " +str(np.min(train_imgs)) +' - '+str(np.max(train_imgs))
-    print "train masks are within 0-1\n"
+    print("\ntrain images/masks shape:")
+    print(train_imgs.shape)
+    print("train images range (min-max): " +str(np.min(train_imgs)) +' - '+str(np.max(train_imgs)))
+    print("train masks are within 0-1\n")
 
     #extract the TRAINING patches from the full images
     patches_imgs_train, patches_masks_train = extract_random(train_imgs,train_masks,patch_height,patch_width,N_subimgs,inside_FOV)
     data_consistency_check(patches_imgs_train, patches_masks_train)
 
-    print "\ntrain PATCHES images/masks shape:"
-    print patches_imgs_train.shape
-    print "train PATCHES images range (min-max): " +str(np.min(patches_imgs_train)) +' - '+str(np.max(patches_imgs_train))
+    print("\ntrain PATCHES images/masks shape:")
+    print(patches_imgs_train.shape)
+    print("train PATCHES images range (min-max): " +str(np.min(patches_imgs_train)) +' - '+str(np.max(patches_imgs_train)))
 
     return patches_imgs_train, patches_masks_train#, patches_imgs_test, patches_masks_test
 
@@ -70,19 +70,19 @@ def get_data_testing(DRIVE_test_imgs_original, DRIVE_test_groudTruth, Imgs_to_te
     #check masks are within 0-1
     assert(np.max(test_masks)==1  and np.min(test_masks)==0)
 
-    print "\ntest images/masks shape:"
-    print test_imgs.shape
-    print "test images range (min-max): " +str(np.min(test_imgs)) +' - '+str(np.max(test_imgs))
-    print "test masks are within 0-1\n"
+    print("\ntest images/masks shape:")
+    print(test_imgs.shape)
+    print("test images range (min-max): " +str(np.min(test_imgs)) +' - '+str(np.max(test_imgs)))
+    print("test masks are within 0-1\n")
 
     #extract the TEST patches from the full images
     patches_imgs_test = extract_ordered(test_imgs,patch_height,patch_width)
     patches_masks_test = extract_ordered(test_masks,patch_height,patch_width)
     data_consistency_check(patches_imgs_test, patches_masks_test)
 
-    print "\ntest PATCHES images/masks shape:"
-    print patches_imgs_test.shape
-    print "test PATCHES images range (min-max): " +str(np.min(patches_imgs_test)) +' - '+str(np.max(patches_imgs_test))
+    print("\ntest PATCHES images/masks shape:")
+    print(patches_imgs_test.shape)
+    print("test PATCHES images range (min-max): " +str(np.min(patches_imgs_test)) +' - '+str(np.max(patches_imgs_test)))
 
     return patches_imgs_test, patches_masks_test
 
@@ -106,19 +106,19 @@ def get_data_testing_overlap(DRIVE_test_imgs_original, DRIVE_test_groudTruth, Im
     #check masks are within 0-1
     assert(np.max(test_masks)==1  and np.min(test_masks)==0)
 
-    print "\ntest images shape:"
-    print test_imgs.shape
-    print "\ntest mask shape:"
-    print test_masks.shape
-    print "test images range (min-max): " +str(np.min(test_imgs)) +' - '+str(np.max(test_imgs))
-    print "test masks are within 0-1\n"
+    print("\ntest images shape:")
+    print(test_imgs.shape)
+    print("\ntest mask shape:")
+    print(test_masks.shape)
+    print("test images range (min-max): " +str(np.min(test_imgs)) +' - '+str(np.max(test_imgs)))
+    print("test masks are within 0-1\n")
 
     #extract the TEST patches from the full images
     patches_imgs_test = extract_ordered_overlap(test_imgs,patch_height,patch_width,stride_height,stride_width)
 
-    print "\ntest PATCHES images shape:"
-    print patches_imgs_test.shape
-    print "test PATCHES images range (min-max): " +str(np.min(patches_imgs_test)) +' - '+str(np.max(patches_imgs_test))
+    print("\ntest PATCHES images shape:")
+    print(patches_imgs_test.shape)
+    print("test PATCHES images range (min-max): " +str(np.min(patches_imgs_test)) +' - '+str(np.max(patches_imgs_test)))
 
     return patches_imgs_test, test_imgs.shape[2], test_imgs.shape[3], test_masks
 
@@ -137,7 +137,7 @@ def data_consistency_check(imgs,masks):
 #  -- Inside OR in full image
 def extract_random(full_imgs,full_masks, patch_h,patch_w, N_patches, inside=True):
     if (N_patches%full_imgs.shape[0] != 0):
-        print "N_patches: plase enter a multiple of 20"
+        print("N_patches: plase enter a multiple of 20")
         exit()
     assert (len(full_imgs.shape)==4 and len(full_masks.shape)==4)  #4D arrays
     assert (full_imgs.shape[1]==1 or full_imgs.shape[1]==3)  #check the channel is 1 or 3
@@ -149,7 +149,7 @@ def extract_random(full_imgs,full_masks, patch_h,patch_w, N_patches, inside=True
     img_w = full_imgs.shape[3] #width of the full image
     # (0,0) in the center of the image
     patch_per_img = int(N_patches/full_imgs.shape[0])  #N_patches equally divided in the full images
-    print "patches per full image: " +str(patch_per_img)
+    print("patches per full image: " +str(patch_per_img))
     iter_tot = 0   #iter over the total numbe rof patches (N_patches)
     for i in range(full_imgs.shape[0]):  #loop over the full images
         k=0
@@ -191,11 +191,11 @@ def extract_ordered(full_imgs, patch_h, patch_w):
     img_w = full_imgs.shape[3] #width of the full image
     N_patches_h = int(img_h/patch_h) #round to lowest int
     if (img_h%patch_h != 0):
-        print "warning: " +str(N_patches_h) +" patches in height, with about " +str(img_h%patch_h) +" pixels left over"
+        print("warning: " +str(N_patches_h) +" patches in height, with about " +str(img_h%patch_h) +" pixels left over")
     N_patches_w = int(img_w/patch_w) #round to lowest int
     if (img_h%patch_h != 0):
-        print "warning: " +str(N_patches_w) +" patches in width, with about " +str(img_w%patch_w) +" pixels left over"
-    print "number of patches per image: " +str(N_patches_h*N_patches_w)
+        print("warning: " +str(N_patches_w) +" patches in width, with about " +str(img_w%patch_w) +" pixels left over")
+    print("number of patches per image: " +str(N_patches_h*N_patches_w))
     N_patches_tot = (N_patches_h*N_patches_w)*full_imgs.shape[0]
     patches = np.empty((N_patches_tot,full_imgs.shape[1],patch_h,patch_w))
 
@@ -218,22 +218,22 @@ def paint_border_overlap(full_imgs, patch_h, patch_w, stride_h, stride_w):
     leftover_h = (img_h-patch_h)%stride_h  #leftover on the h dim
     leftover_w = (img_w-patch_w)%stride_w  #leftover on the w dim
     if (leftover_h != 0):  #change dimension of img_h
-        print "\nthe side H is not compatible with the selected stride of " +str(stride_h)
-        print "img_h " +str(img_h) + ", patch_h " +str(patch_h) + ", stride_h " +str(stride_h)
-        print "(img_h - patch_h) MOD stride_h: " +str(leftover_h)
-        print "So the H dim will be padded with additional " +str(stride_h - leftover_h) + " pixels"
+        print("\nthe side H is not compatible with the selected stride of " +str(stride_h))
+        print("img_h " +str(img_h) + ", patch_h " +str(patch_h) + ", stride_h " +str(stride_h))
+        print("(img_h - patch_h) MOD stride_h: " +str(leftover_h))
+        print("So the H dim will be padded with additional " +str(stride_h - leftover_h) + " pixels")
         tmp_full_imgs = np.zeros((full_imgs.shape[0],full_imgs.shape[1],img_h+(stride_h-leftover_h),img_w))
         tmp_full_imgs[0:full_imgs.shape[0],0:full_imgs.shape[1],0:img_h,0:img_w] = full_imgs
         full_imgs = tmp_full_imgs
     if (leftover_w != 0):   #change dimension of img_w
-        print "the side W is not compatible with the selected stride of " +str(stride_w)
-        print "img_w " +str(img_w) + ", patch_w " +str(patch_w) + ", stride_w " +str(stride_w)
-        print "(img_w - patch_w) MOD stride_w: " +str(leftover_w)
-        print "So the W dim will be padded with additional " +str(stride_w - leftover_w) + " pixels"
+        print("the side W is not compatible with the selected stride of " +str(stride_w))
+        print("img_w " +str(img_w) + ", patch_w " +str(patch_w) + ", stride_w " +str(stride_w))
+        print("(img_w - patch_w) MOD stride_w: " +str(leftover_w))
+        print("So the W dim will be padded with additional " +str(stride_w - leftover_w) + " pixels")
         tmp_full_imgs = np.zeros((full_imgs.shape[0],full_imgs.shape[1],full_imgs.shape[2],img_w+(stride_w - leftover_w)))
         tmp_full_imgs[0:full_imgs.shape[0],0:full_imgs.shape[1],0:full_imgs.shape[2],0:img_w] = full_imgs
         full_imgs = tmp_full_imgs
-    print "new full images shape: \n" +str(full_imgs.shape)
+    print("new full images shape: \n" +str(full_imgs.shape))
     return full_imgs
 
 #Divide all the full_imgs in pacthes
@@ -245,9 +245,9 @@ def extract_ordered_overlap(full_imgs, patch_h, patch_w,stride_h,stride_w):
     assert ((img_h-patch_h)%stride_h==0 and (img_w-patch_w)%stride_w==0)
     N_patches_img = ((img_h-patch_h)//stride_h+1)*((img_w-patch_w)//stride_w+1)  #// --> division between integers
     N_patches_tot = N_patches_img*full_imgs.shape[0]
-    print "Number of patches on h : " +str(((img_h-patch_h)//stride_h+1))
-    print "Number of patches on w : " +str(((img_w-patch_w)//stride_w+1))
-    print "number of patches per image: " +str(N_patches_img) +", totally for this dataset: " +str(N_patches_tot)
+    print("Number of patches on h : " +str(((img_h-patch_h)//stride_h+1)))
+    print("Number of patches on w : " +str(((img_w-patch_w)//stride_w+1)))
+    print("number of patches per image: " +str(N_patches_img) +", totally for this dataset: " +str(N_patches_tot))
     patches = np.empty((N_patches_tot,full_imgs.shape[1],patch_h,patch_w))
     iter_tot = 0   #iter over the total number of patches (N_patches)
     for i in range(full_imgs.shape[0]):  #loop over the full images
@@ -268,12 +268,12 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     N_patches_h = (img_h-patch_h)//stride_h+1
     N_patches_w = (img_w-patch_w)//stride_w+1
     N_patches_img = N_patches_h * N_patches_w
-    print "N_patches_h: " +str(N_patches_h)
-    print "N_patches_w: " +str(N_patches_w)
-    print "N_patches_img: " +str(N_patches_img)
+    print("N_patches_h: " +str(N_patches_h))
+    print("N_patches_w: " +str(N_patches_w))
+    print("N_patches_img: " +str(N_patches_img))
     assert (preds.shape[0]%N_patches_img==0)
     N_full_imgs = preds.shape[0]//N_patches_img
-    print "According to the dimension inserted, there are " +str(N_full_imgs) +" full images (of " +str(img_h)+"x" +str(img_w) +" each)"
+    print("According to the dimension inserted, there are " +str(N_full_imgs) +" full images (of " +str(img_h)+"x" +str(img_w) +" each)")
     full_prob = np.zeros((N_full_imgs,preds.shape[1],img_h,img_w))  #itialize to zero mega array with sum of Probabilities
     full_sum = np.zeros((N_full_imgs,preds.shape[1],img_h,img_w))
 
@@ -287,7 +287,7 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     assert(k==preds.shape[0])
     assert(np.min(full_sum)>=1.0)  #at least one
     final_avg = full_prob/full_sum
-    print final_avg.shape
+    print(final_avg.shape)
     assert(np.max(final_avg)<=1.0) #max value for a pixel is 1.0
     assert(np.min(final_avg)>=0.0) #min value for a pixel is 0.0
     return final_avg

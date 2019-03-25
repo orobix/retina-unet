@@ -5,11 +5,11 @@
 ##################################################
 
 import os, sys
-import ConfigParser
+import configparser
 
 
 #config file to read from
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 config.readfp(open(r'./configuration.txt'))
 #===========================================
 #name of the experiment!!
@@ -20,7 +20,7 @@ run_GPU = '' if sys.platform == 'win32' else ' THEANO_FLAGS=device=gpu,floatX=fl
 
 #create a folder for the results if not existing already
 result_dir = name_experiment
-print "\n1. Create directory for the results (if not already existing)"
+print("\n1. Create directory for the results (if not already existing)")
 if os.path.exists(result_dir):
     pass
 elif sys.platform=='win32':
@@ -31,8 +31,10 @@ else:
 
 # finally run the prediction
 if nohup:
-    print "\n2. Run the prediction on GPU  with nohup"
+    print("\n2. Run the prediction on GPU  with nohup")
     os.system(run_GPU +' nohup python -u ./src/retinaNN_predict.py > ' +'./'+name_experiment+'/'+name_experiment+'_prediction.nohup')
 else:
-    print "\n2. Run the prediction on GPU (no nohup)"
+    print("\n2. Run the prediction on GPU (no nohup)")
     os.system(run_GPU +' python ./src/retinaNN_predict.py')
+
+print("Done!")

@@ -1,0 +1,4 @@
+  File "./src/retinaNN_training.py", line 169
+    print "Check: final output of the network:"
+                                              ^
+SyntaxError: Missing parentheses in call to 'print'. Did you mean print("Check: final output of the network:")?

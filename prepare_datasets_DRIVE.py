@@ -1,6 +1,6 @@
 #==========================================================
 #
-#  This prepare the hdf5 datasets of the DRIVE database
+#  This prepare the hdf5 datasets of the NEW database
 #
 #============================================================
 
@@ -18,20 +18,21 @@ def write_hdf5(arr,outfile):
 
 #------------Path of the images --------------------------------------------------------------
 #train
-original_imgs_train = "./DRIVE/training/images/"
-groundTruth_imgs_train = "./DRIVE/training/1st_manual/"
-borderMasks_imgs_train = "./DRIVE/training/mask/"
+original_imgs_train = "./NEW/training/images/"
+groundTruth_imgs_train = "./NEW/training/1st_manual/"
+borderMasks_imgs_train = "./NEW/training/mask/"
 #test
-original_imgs_test = "./DRIVE/test/images/"
-groundTruth_imgs_test = "./DRIVE/test/1st_manual/"
-borderMasks_imgs_test = "./DRIVE/test/mask/"
+original_imgs_test = "./NEW/test/images/"
+groundTruth_imgs_test = "./NEW/test/1st_manual/"
+borderMasks_imgs_test = "./NEW/test/mask/"
 #---------------------------------------------------------------------------------------------
 
-Nimgs = 20
+Nimgs = 3 ##to change
 channels = 3
-height = 584
+#height = 584 ##origin unet pic height
+height = 565
 width = 565
-dataset_path = "./DRIVE_datasets_training_testing/"
+dataset_path = "./NEW_datasets_training_testing/"
 
 def get_datasets(imgs_dir,groundTruth_dir,borderMasks_dir,train_test="null"):
     imgs = np.empty((Nimgs,height,width,channels))
@@ -63,10 +64,12 @@ def get_datasets(imgs_dir,groundTruth_dir,borderMasks_dir,train_test="null"):
 
     print ("imgs max: " +str(np.max(imgs)))
     print ("imgs min: " +str(np.min(imgs)))
-    assert(np.max(groundTruth)==255 and np.max(border_masks)==255)
+    print (np.max(border_masks))
+    assert(np.max(groundTruth)==255) #and np.max(border_masks)==255)
     assert(np.min(groundTruth)==0 and np.min(border_masks)==0)
     print ("ground truth and border masks are correctly withih pixel value range 0-255 (black-white)")
     #reshaping for my standard tensors
+    print(imgs.shape)
     imgs = np.transpose(imgs,(0,3,1,2))
     assert(imgs.shape == (Nimgs,channels,height,width))
     groundTruth = np.reshape(groundTruth,(Nimgs,1,height,width))
@@ -78,15 +81,16 @@ def get_datasets(imgs_dir,groundTruth_dir,borderMasks_dir,train_test="null"):
 if not os.path.exists(dataset_path):
     os.makedirs(dataset_path)
 #getting the training datasets
-imgs_train, groundTruth_train, border_masks_train = get_datasets(original_imgs_train,groundTruth_imgs_train,borderMasks_imgs_train,"train")
-print ("saving train datasets")
-write_hdf5(imgs_train, dataset_path + "DRIVE_dataset_imgs_train.hdf5")
-write_hdf5(groundTruth_train, dataset_path + "DRIVE_dataset_groundTruth_train.hdf5")
-write_hdf5(border_masks_train,dataset_path + "DRIVE_dataset_borderMasks_train.hdf5")
+# imgs_train, groundTruth_train, border_masks_train = get_datasets(original_imgs_train,groundTruth_imgs_train,borderMasks_imgs_train,"train")
+# print ("saving train datasets")
+# write_hdf5(imgs_train, dataset_path + "NEW_dataset_imgs_train.hdf5")
+# write_hdf5(groundTruth_train, dataset_path + "NEW_dataset_groundTruth_train.hdf5")
+# write_hdf5(border_masks_train,dataset_path + "NEW_dataset_borderMasks_train.hdf5")
+# print("train data done!")
 
 #getting the testing datasets
 imgs_test, groundTruth_test, border_masks_test = get_datasets(original_imgs_test,groundTruth_imgs_test,borderMasks_imgs_test,"test")
 print ("saving test datasets")
-write_hdf5(imgs_test,dataset_path + "DRIVE_dataset_imgs_test.hdf5")
-write_hdf5(groundTruth_test, dataset_path + "DRIVE_dataset_groundTruth_test.hdf5")
-write_hdf5(border_masks_test,dataset_path + "DRIVE_dataset_borderMasks_test.hdf5")
+write_hdf5(imgs_test,dataset_path + "NEW_dataset_imgs_test.hdf5")
+write_hdf5(groundTruth_test, dataset_path + "NEW_dataset_groundTruth_test.hdf5")
+write_hdf5(border_masks_test,dataset_path + "NEW_dataset_borderMasks_test.hdf5")

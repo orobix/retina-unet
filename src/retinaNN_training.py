@@ -9,7 +9,7 @@
 
 
 import numpy as np
-import ConfigParser
+import configparser
 
 from keras.models import Model
 from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, UpSampling2D, Reshape, core, Dropout
@@ -132,7 +132,7 @@ def get_gnet(n_ch,patch_height,patch_width):
     return model
 
 #========= Load settings from Config file
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 config.read('configuration.txt')
 #patch to the datasets
 path_data = config.get('data paths', 'path_local')
@@ -166,8 +166,8 @@ n_ch = patches_imgs_train.shape[1]
 patch_height = patches_imgs_train.shape[2]
 patch_width = patches_imgs_train.shape[3]
 model = get_unet(n_ch, patch_height, patch_width)  #the U-net model
-print "Check: final output of the network:"
-print model.output_shape
+print("Check: final output of the network:")
+print(model.output_shape)
 plot(model, to_file='./'+name_experiment+'/'+name_experiment + '_model.png')   #check how the model looks like
 json_string = model.to_json()
 open('./'+name_experiment+'/'+name_experiment +'_architecture.json', 'w').write(json_string)
