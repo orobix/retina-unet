@@ -166,9 +166,9 @@ print("y scores pixels: " +str(y_scores.shape[0]) +" (radius 270: 270*270*3.14==
 print("y true pixels: " +str(y_true.shape[0]) +" (radius 270: 270*270*3.14==228906), including background around retina: " +str(gtruth_masks.shape[2]*gtruth_masks.shape[3]*gtruth_masks.shape[0])+" (584*565==329960)")
 
 #Area under the ROC curve
-print(type(y_true),type(y_true[0])
-fpr, tpr, thresholds = roc_curve((y_true), y_scores)
-AUC_ROC = roc_auc_score(y_true, y_scores)
+print(y_true[0:2][:])
+fpr, tpr, thresholds = roc_curve(y_true.astype(int), y_scores)  #round() or int()?
+AUC_ROC = roc_auc_score(y_true.astype(int), y_scores)
 # test_integral = np.trapz(tpr,fpr) #trapz is numpy integration
 print("\nArea under the ROC curve: " +str(AUC_ROC))
 roc_curve =plt.figure()
@@ -180,7 +180,7 @@ plt.legend(loc="lower right")
 plt.savefig(path_experiment+"ROC.png")
 
 #Precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_true, y_scores)
+precision, recall, thresholds = precision_recall_curve(y_true.astype(int), y_scores)
 precision = np.fliplr([precision])[0]  #so the array is increasing (you won't get negative AUC)
 recall = np.fliplr([recall])[0]  #so the array is increasing (you won't get negative AUC)
 AUC_prec_rec = np.trapz(precision,recall)
@@ -202,7 +202,7 @@ for i in range(y_scores.shape[0]):
         y_pred[i]=1
     else:
         y_pred[i]=0
-confusion = confusion_matrix(y_true, y_pred)
+confusion = confusion_matrix(y_true.astype(int), y_pred)
 print(confusion)
 accuracy = 0
 if float(np.sum(confusion))!=0:
@@ -222,11 +222,11 @@ if float(confusion[1,1]+confusion[0,1])!=0:
 print("Precision: " +str(precision))
 
 #Jaccard similarity index
-jaccard_index = jaccard_similarity_score(y_true, y_pred, normalize=True)
+jaccard_index = jaccard_similarity_score(y_true.astype(int), y_pred, normalize=True)
 print("\nJaccard similarity score: " +str(jaccard_index))
 
 #F1 score
-F1_score = f1_score(y_true, y_pred, labels=None, average='binary', sample_weight=None)
+F1_score = f1_score(y_true.astype(int), y_pred, labels=None, average='binary', sample_weight=None)
 print("\nF1 score (F-measure): " +str(F1_score))
 
 #Save the results

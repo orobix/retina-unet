@@ -15,22 +15,22 @@ name = try
 
 [data attributes]
 #Dimensions of the patches extracted from the full images
-patch_height = 8
+patch_height = 8 
 #48
-patch_width = 8
+patch_width = 8 
 #48
 
 
 [training settings]
 #number of total patches:
-N_subimgs = 20 
+N_subimgs = 20   
 #190000
 #if patches are extracted only inside the field of view:
 inside_FOV = False
 #Number of training epochs
-N_epochs = 5
+N_epochs = 5  
 #150
-batch_size = 4
+batch_size = 4  
 #32
 #if running with nohup
 nohup = True
@@ -40,7 +40,7 @@ nohup = True
 #Choose the model to test: best==epoch with min loss, last==last epoch
 best_last = best
 #number of full images for the test (max 20)
-full_images_to_test = 5
+full_images_to_test = 5  
 #20
 #How many original-groundTruth-prediction images are visualized in each image
 N_group_visual = 1
