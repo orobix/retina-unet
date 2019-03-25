@@ -1,10 +1,8 @@
 from pylab import *
 from PIL import Image
 
-#im = Image.open("/home/moriaty/data/Projects/RetinalUnet/NEW/training/mask/20_training_mask.gif")
-#im.show()
 imgs=np.empty((565,565,3))
-im = Image.open("./NEW/training/images/20_training.tif")
+im = Image.open("./NEW/test/images/20_test.tif")
 imgs = np.asarray(im)
 #imgs = np.transpose(im,(0,3,1,2))
 #im2 = (255/(im.max()-im.min())*(im-im.min())).astype(uint8)

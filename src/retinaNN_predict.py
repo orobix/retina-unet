@@ -166,6 +166,7 @@ print("y scores pixels: " +str(y_scores.shape[0]) +" (radius 270: 270*270*3.14==
 print("y true pixels: " +str(y_true.shape[0]) +" (radius 270: 270*270*3.14==228906), including background around retina: " +str(gtruth_masks.shape[2]*gtruth_masks.shape[3]*gtruth_masks.shape[0])+" (584*565==329960)")
 
 #Area under the ROC curve
+print(type(y_true),type(y_true[0])
 fpr, tpr, thresholds = roc_curve((y_true), y_scores)
 AUC_ROC = roc_auc_score(y_true, y_scores)
 # test_integral = np.trapz(tpr,fpr) #trapz is numpy integration
