@@ -2,38 +2,38 @@ Using TensorFlow backend.
 
 train images/masks shape:
 (20, 1, 556, 565)
-train images range (min-max): 0.01568627450980392 - 1.0
+train images range (min-max): 0.0 - 1.0
 train masks are within 0-1
 
 patches per full image: 1
 
 train PATCHES images/masks shape:
 (20, 1, 8, 8)
-train PATCHES images range (min-max): 0.023529411764705882 - 0.9098039215686274
-2019-03-25 16:20:53.277031: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
-2019-03-25 16:20:53.281995: I tensorflow/core/common_runtime/process_util.cc:69] Creating new thread pool with default inter op setting: 2. Tune using inter_op_parallelism_threads for best performance.
+train PATCHES images range (min-max): 0.01568627450980392 - 0.8117647058823529
+2019-03-25 17:36:23.489408: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2019-03-25 17:36:23.492153: I tensorflow/core/common_runtime/process_util.cc:69] Creating new thread pool with default inter op setting: 2. Tune using inter_op_parallelism_threads for best performance.
 Check: final output of the network:
 (None, 64, 2)
 ./src/retinaNN_training.py:191: UserWarning: The `nb_epoch` argument in `fit` has been renamed `epochs`.
   model.fit(patches_imgs_train, patches_masks_train, nb_epoch=N_epochs, batch_size=batch_size, verbose=2, shuffle=True, validation_split=0.1, callbacks=[checkpointer])
 Train on 18 samples, validate on 2 samples
 Epoch 1/5
- - 2s - loss: 0.6887 - acc: 0.8429 - val_loss: 0.6851 - val_acc: 0.7500
+ - 2s - loss: 0.6931 - acc: 0.7144 - val_loss: 0.6883 - val_acc: 1.0000
 
-Epoch 00001: val_loss improved from inf to 0.68506, saving model to ./try/try_best_weights.h5
+Epoch 00001: val_loss improved from inf to 0.68831, saving model to ./try/try_best_weights.h5
 Epoch 2/5
- - 0s - loss: 0.6777 - acc: 0.8542 - val_loss: 0.6757 - val_acc: 0.7500
+ - 0s - loss: 0.6894 - acc: 0.7882 - val_loss: 0.6765 - val_acc: 1.0000
 
-Epoch 00002: val_loss improved from 0.68506 to 0.67571, saving model to ./try/try_best_weights.h5
+Epoch 00002: val_loss improved from 0.68831 to 0.67652, saving model to ./try/try_best_weights.h5
 Epoch 3/5
- - 0s - loss: 0.6642 - acc: 0.8542 - val_loss: 0.6672 - val_acc: 0.7500
+ - 0s - loss: 0.6818 - acc: 0.8186 - val_loss: 0.6635 - val_acc: 1.0000
 
-Epoch 00003: val_loss improved from 0.67571 to 0.66724, saving model to ./try/try_best_weights.h5
+Epoch 00003: val_loss improved from 0.67652 to 0.66347, saving model to ./try/try_best_weights.h5
 Epoch 4/5
- - 0s - loss: 0.6520 - acc: 0.8542 - val_loss: 0.6586 - val_acc: 0.7500
+ - 0s - loss: 0.6733 - acc: 0.8177 - val_loss: 0.6491 - val_acc: 1.0000
 
-Epoch 00004: val_loss improved from 0.66724 to 0.65855, saving model to ./try/try_best_weights.h5
+Epoch 00004: val_loss improved from 0.66347 to 0.64912, saving model to ./try/try_best_weights.h5
 Epoch 5/5
- - 0s - loss: 0.6388 - acc: 0.8542 - val_loss: 0.6506 - val_acc: 0.7500
+ - 0s - loss: 0.6642 - acc: 0.8177 - val_loss: 0.6349 - val_acc: 1.0000
 
-Epoch 00005: val_loss improved from 0.65855 to 0.65064, saving model to ./try/try_best_weights.h5
+Epoch 00005: val_loss improved from 0.64912 to 0.63491, saving model to ./try/try_best_weights.h5

@@ -45,16 +45,16 @@ def get_datasets(imgs_dir,groundTruth_dir,borderMasks_dir,train_test="null"):
             img = Image.open(imgs_dir+files[i])
             imgs[i] = np.asarray(img)
             #corresponding ground truth
-            groundTruth_name = files[i][0:2] + "_manual1.gif"
+            groundTruth_name = files[i][0:2] + "_manual1.png"
             print ("ground truth name: " + groundTruth_name)
             g_truth = Image.open(groundTruth_dir + groundTruth_name)
             groundTruth[i] = np.asarray(g_truth)
             #corresponding border masks
             border_masks_name = ""
             if train_test=="train":
-                border_masks_name = files[i][0:2] + "_training_mask.gif"
+                border_masks_name = files[i][0:2] + "_training_mask.png"
             elif train_test=="test":
-                border_masks_name = files[i][0:2] + "_test_mask.gif"
+                border_masks_name = files[i][0:2] + "_test_mask.png"
             else:
                 print ("specify if train or test!!")
                 exit()
@@ -65,7 +65,7 @@ def get_datasets(imgs_dir,groundTruth_dir,borderMasks_dir,train_test="null"):
     print ("imgs max: " +str(np.max(imgs)))
     print ("imgs min: " +str(np.min(imgs)))
     print (np.max(border_masks))
-    assert(np.max(groundTruth)==255) #and np.max(border_masks)==255)
+    assert(np.max(groundTruth)==255 and np.max(border_masks)==255)
     assert(np.min(groundTruth)==0 and np.min(border_masks)==0)
     print ("ground truth and border masks are correctly withih pixel value range 0-255 (black-white)")
     #reshaping for my standard tensors
