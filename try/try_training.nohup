@@ -8,32 +8,245 @@ train masks are within 0-1
 patches per full image: 1
 
 train PATCHES images/masks shape:
-(20, 1, 8, 8)
-train PATCHES images range (min-max): 0.01568627450980392 - 0.8117647058823529
-2019-03-25 17:36:23.489408: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
-2019-03-25 17:36:23.492153: I tensorflow/core/common_runtime/process_util.cc:69] Creating new thread pool with default inter op setting: 2. Tune using inter_op_parallelism_threads for best performance.
+(20, 1, 48, 48)
+train PATCHES images range (min-max): 0.00784313725490196 - 0.9529411764705882
+2019-04-05 14:19:50.372522: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2019-04-05 14:19:50.377523: I tensorflow/core/common_runtime/process_util.cc:69] Creating new thread pool with default inter op setting: 2. Tune using inter_op_parallelism_threads for best performance.
 Check: final output of the network:
-(None, 64, 2)
-./src/retinaNN_training.py:191: UserWarning: The `nb_epoch` argument in `fit` has been renamed `epochs`.
+(None, 2304, 2)
+./src/retinaNN_training.py:264: UserWarning: The `nb_epoch` argument in `fit` has been renamed `epochs`.
   model.fit(patches_imgs_train, patches_masks_train, nb_epoch=N_epochs, batch_size=batch_size, verbose=2, shuffle=True, validation_split=0.1, callbacks=[checkpointer])
 Train on 18 samples, validate on 2 samples
-Epoch 1/5
- - 2s - loss: 0.6931 - acc: 0.7144 - val_loss: 0.6883 - val_acc: 1.0000
+Epoch 1/150
+ - 4s - loss: 0.6743 - acc: 0.8020 - val_loss: 0.6618 - val_acc: 0.8644
 
-Epoch 00001: val_loss improved from inf to 0.68831, saving model to ./try/try_best_weights.h5
-Epoch 2/5
- - 0s - loss: 0.6894 - acc: 0.7882 - val_loss: 0.6765 - val_acc: 1.0000
+Epoch 00001: val_loss improved from inf to 0.66178, saving model to ./try/try_best_weights.h5
+Epoch 2/150
+ - 2s - loss: 0.6699 - acc: 0.8142 - val_loss: 0.6573 - val_acc: 0.8646
 
-Epoch 00002: val_loss improved from 0.68831 to 0.67652, saving model to ./try/try_best_weights.h5
-Epoch 3/5
- - 0s - loss: 0.6818 - acc: 0.8186 - val_loss: 0.6635 - val_acc: 1.0000
+Epoch 00002: val_loss improved from 0.66178 to 0.65732, saving model to ./try/try_best_weights.h5
+Epoch 3/150
+ - 2s - loss: 0.6663 - acc: 0.8182 - val_loss: 0.6530 - val_acc: 0.8646
 
-Epoch 00003: val_loss improved from 0.67652 to 0.66347, saving model to ./try/try_best_weights.h5
-Epoch 4/5
- - 0s - loss: 0.6733 - acc: 0.8177 - val_loss: 0.6491 - val_acc: 1.0000
+Epoch 00003: val_loss improved from 0.65732 to 0.65300, saving model to ./try/try_best_weights.h5
+Epoch 4/150
+ - 2s - loss: 0.6623 - acc: 0.8200 - val_loss: 0.6487 - val_acc: 0.8646
 
-Epoch 00004: val_loss improved from 0.66347 to 0.64912, saving model to ./try/try_best_weights.h5
-Epoch 5/5
- - 0s - loss: 0.6642 - acc: 0.8177 - val_loss: 0.6349 - val_acc: 1.0000
+Epoch 00004: val_loss improved from 0.65300 to 0.64868, saving model to ./try/try_best_weights.h5
+Epoch 5/150
+ - 2s - loss: 0.6585 - acc: 0.8212 - val_loss: 0.6444 - val_acc: 0.8646
 
-Epoch 00005: val_loss improved from 0.64912 to 0.63491, saving model to ./try/try_best_weights.h5
+Epoch 00005: val_loss improved from 0.64868 to 0.64436, saving model to ./try/try_best_weights.h5
+Epoch 6/150
+ - 2s - loss: 0.6544 - acc: 0.8217 - val_loss: 0.6400 - val_acc: 0.8646
+
+Epoch 00006: val_loss improved from 0.64436 to 0.64000, saving model to ./try/try_best_weights.h5
+Epoch 7/150
+ - 2s - loss: 0.6506 - acc: 0.8220 - val_loss: 0.6356 - val_acc: 0.8646
+
+Epoch 00007: val_loss improved from 0.64000 to 0.63560, saving model to ./try/try_best_weights.h5
+Epoch 8/150
+ - 2s - loss: 0.6467 - acc: 0.8223 - val_loss: 0.6312 - val_acc: 0.8646
+
+Epoch 00008: val_loss improved from 0.63560 to 0.63116, saving model to ./try/try_best_weights.h5
+Epoch 9/150
+ - 2s - loss: 0.6426 - acc: 0.8222 - val_loss: 0.6267 - val_acc: 0.8646
+
+Epoch 00009: val_loss improved from 0.63116 to 0.62667, saving model to ./try/try_best_weights.h5
+Epoch 10/150
+ - 2s - loss: 0.6388 - acc: 0.8222 - val_loss: 0.6221 - val_acc: 0.8646
+
+Epoch 00010: val_loss improved from 0.62667 to 0.62211, saving model to ./try/try_best_weights.h5
+Epoch 11/150
+ - 2s - loss: 0.6349 - acc: 0.8222 - val_loss: 0.6175 - val_acc: 0.8646
+
+Epoch 00011: val_loss improved from 0.62211 to 0.61748, saving model to ./try/try_best_weights.h5
+Epoch 12/150
+ - 2s - loss: 0.6305 - acc: 0.8222 - val_loss: 0.6127 - val_acc: 0.8646
+
+Epoch 00012: val_loss improved from 0.61748 to 0.61272, saving model to ./try/try_best_weights.h5
+Epoch 13/150
+ - 2s - loss: 0.6260 - acc: 0.8223 - val_loss: 0.6078 - val_acc: 0.8646
+
+Epoch 00013: val_loss improved from 0.61272 to 0.60776, saving model to ./try/try_best_weights.h5
+Epoch 14/150
+ - 2s - loss: 0.6221 - acc: 0.8223 - val_loss: 0.6026 - val_acc: 0.8646
+
+Epoch 00014: val_loss improved from 0.60776 to 0.60263, saving model to ./try/try_best_weights.h5
+Epoch 15/150
+ - 2s - loss: 0.6178 - acc: 0.8223 - val_loss: 0.5973 - val_acc: 0.8646
+
+Epoch 00015: val_loss improved from 0.60263 to 0.59726, saving model to ./try/try_best_weights.h5
+Epoch 16/150
+ - 2s - loss: 0.6134 - acc: 0.8223 - val_loss: 0.5917 - val_acc: 0.8646
+
+Epoch 00016: val_loss improved from 0.59726 to 0.59170, saving model to ./try/try_best_weights.h5
+Epoch 17/150
+ - 2s - loss: 0.6093 - acc: 0.8223 - val_loss: 0.5860 - val_acc: 0.8646
+
+Epoch 00017: val_loss improved from 0.59170 to 0.58599, saving model to ./try/try_best_weights.h5
+Epoch 18/150
+ - 2s - loss: 0.6048 - acc: 0.8223 - val_loss: 0.5802 - val_acc: 0.8646
+
+Epoch 00018: val_loss improved from 0.58599 to 0.58017, saving model to ./try/try_best_weights.h5
+Epoch 19/150
+ - 2s - loss: 0.6001 - acc: 0.8223 - val_loss: 0.5742 - val_acc: 0.8646
+
+Epoch 00019: val_loss improved from 0.58017 to 0.57423, saving model to ./try/try_best_weights.h5
+Epoch 20/150
+ - 2s - loss: 0.5956 - acc: 0.8223 - val_loss: 0.5682 - val_acc: 0.8646
+
+Epoch 00020: val_loss improved from 0.57423 to 0.56818, saving model to ./try/try_best_weights.h5
+Epoch 21/150
+ - 2s - loss: 0.5911 - acc: 0.8223 - val_loss: 0.5620 - val_acc: 0.8646
+
+Epoch 00021: val_loss improved from 0.56818 to 0.56204, saving model to ./try/try_best_weights.h5
+Epoch 22/150
+ - 2s - loss: 0.5858 - acc: 0.8223 - val_loss: 0.5558 - val_acc: 0.8646
+
+Epoch 00022: val_loss improved from 0.56204 to 0.55577, saving model to ./try/try_best_weights.h5
+Epoch 23/150
+ - 2s - loss: 0.5812 - acc: 0.8223 - val_loss: 0.5494 - val_acc: 0.8646
+
+Epoch 00023: val_loss improved from 0.55577 to 0.54942, saving model to ./try/try_best_weights.h5
+Epoch 24/150
+ - 2s - loss: 0.5768 - acc: 0.8223 - val_loss: 0.5430 - val_acc: 0.8646
+
+Epoch 00024: val_loss improved from 0.54942 to 0.54304, saving model to ./try/try_best_weights.h5
+Epoch 25/150
+ - 2s - loss: 0.5720 - acc: 0.8223 - val_loss: 0.5366 - val_acc: 0.8646
+
+Epoch 00025: val_loss improved from 0.54304 to 0.53665, saving model to ./try/try_best_weights.h5
+Epoch 26/150
+ - 2s - loss: 0.5664 - acc: 0.8223 - val_loss: 0.5302 - val_acc: 0.8646
+
+Epoch 00026: val_loss improved from 0.53665 to 0.53016, saving model to ./try/try_best_weights.h5
+Epoch 27/150
+ - 2s - loss: 0.5620 - acc: 0.8223 - val_loss: 0.5237 - val_acc: 0.8646
+
+Epoch 00027: val_loss improved from 0.53016 to 0.52367, saving model to ./try/try_best_weights.h5
+Epoch 28/150
+ - 2s - loss: 0.5572 - acc: 0.8223 - val_loss: 0.5172 - val_acc: 0.8646
+
+Epoch 00028: val_loss improved from 0.52367 to 0.51718, saving model to ./try/try_best_weights.h5
+Epoch 29/150
+ - 2s - loss: 0.5525 - acc: 0.8223 - val_loss: 0.5107 - val_acc: 0.8646
+
+Epoch 00029: val_loss improved from 0.51718 to 0.51071, saving model to ./try/try_best_weights.h5
+Epoch 30/150
+ - 2s - loss: 0.5482 - acc: 0.8223 - val_loss: 0.5043 - val_acc: 0.8646
+
+Epoch 00030: val_loss improved from 0.51071 to 0.50430, saving model to ./try/try_best_weights.h5
+Epoch 31/150
+ - 2s - loss: 0.5432 - acc: 0.8223 - val_loss: 0.4979 - val_acc: 0.8646
+
+Epoch 00031: val_loss improved from 0.50430 to 0.49793, saving model to ./try/try_best_weights.h5
+Epoch 32/150
+ - 2s - loss: 0.5384 - acc: 0.8223 - val_loss: 0.4916 - val_acc: 0.8646
+
+Epoch 00032: val_loss improved from 0.49793 to 0.49162, saving model to ./try/try_best_weights.h5
+Epoch 33/150
+ - 2s - loss: 0.5343 - acc: 0.8223 - val_loss: 0.4854 - val_acc: 0.8646
+
+Epoch 00033: val_loss improved from 0.49162 to 0.48541, saving model to ./try/try_best_weights.h5
+Epoch 34/150
+ - 2s - loss: 0.5297 - acc: 0.8223 - val_loss: 0.4793 - val_acc: 0.8646
+
+Epoch 00034: val_loss improved from 0.48541 to 0.47932, saving model to ./try/try_best_weights.h5
+Epoch 35/150
+ - 2s - loss: 0.5257 - acc: 0.8223 - val_loss: 0.4734 - val_acc: 0.8646
+
+Epoch 00035: val_loss improved from 0.47932 to 0.47341, saving model to ./try/try_best_weights.h5
+Epoch 36/150
+ - 2s - loss: 0.5218 - acc: 0.8223 - val_loss: 0.4677 - val_acc: 0.8646
+
+Epoch 00036: val_loss improved from 0.47341 to 0.46769, saving model to ./try/try_best_weights.h5
+Epoch 37/150
+ - 2s - loss: 0.5182 - acc: 0.8223 - val_loss: 0.4622 - val_acc: 0.8646
+
+Epoch 00037: val_loss improved from 0.46769 to 0.46218, saving model to ./try/try_best_weights.h5
+Epoch 38/150
+ - 2s - loss: 0.5146 - acc: 0.8223 - val_loss: 0.4569 - val_acc: 0.8646
+
+Epoch 00038: val_loss improved from 0.46218 to 0.45689, saving model to ./try/try_best_weights.h5
+Epoch 39/150
+ - 2s - loss: 0.5112 - acc: 0.8223 - val_loss: 0.4518 - val_acc: 0.8646
+
+Epoch 00039: val_loss improved from 0.45689 to 0.45180, saving model to ./try/try_best_weights.h5
+Epoch 40/150
+ - 2s - loss: 0.5080 - acc: 0.8223 - val_loss: 0.4470 - val_acc: 0.8646
+
+Epoch 00040: val_loss improved from 0.45180 to 0.44699, saving model to ./try/try_best_weights.h5
+Epoch 41/150
+ - 2s - loss: 0.5045 - acc: 0.8223 - val_loss: 0.4424 - val_acc: 0.8646
+
+Epoch 00041: val_loss improved from 0.44699 to 0.44242, saving model to ./try/try_best_weights.h5
+Epoch 42/150
+ - 2s - loss: 0.5024 - acc: 0.8223 - val_loss: 0.4382 - val_acc: 0.8646
+
+Epoch 00042: val_loss improved from 0.44242 to 0.43816, saving model to ./try/try_best_weights.h5
+Epoch 43/150
+ - 2s - loss: 0.4996 - acc: 0.8223 - val_loss: 0.4342 - val_acc: 0.8646
+
+Epoch 00043: val_loss improved from 0.43816 to 0.43418, saving model to ./try/try_best_weights.h5
+Epoch 44/150
+ - 2s - loss: 0.4978 - acc: 0.8223 - val_loss: 0.4305 - val_acc: 0.8646
+
+Epoch 00044: val_loss improved from 0.43418 to 0.43051, saving model to ./try/try_best_weights.h5
+Epoch 45/150
+ - 2s - loss: 0.4957 - acc: 0.8223 - val_loss: 0.4271 - val_acc: 0.8646
+
+Epoch 00045: val_loss improved from 0.43051 to 0.42707, saving model to ./try/try_best_weights.h5
+Epoch 46/150
+ - 2s - loss: 0.4946 - acc: 0.8223 - val_loss: 0.4239 - val_acc: 0.8646
+
+Epoch 00046: val_loss improved from 0.42707 to 0.42392, saving model to ./try/try_best_weights.h5
+Epoch 47/150
+ - 2s - loss: 0.4930 - acc: 0.8223 - val_loss: 0.4211 - val_acc: 0.8646
+
+Epoch 00047: val_loss improved from 0.42392 to 0.42107, saving model to ./try/try_best_weights.h5
+Epoch 48/150
+ - 2s - loss: 0.4917 - acc: 0.8223 - val_loss: 0.4185 - val_acc: 0.8646
+
+Epoch 00048: val_loss improved from 0.42107 to 0.41846, saving model to ./try/try_best_weights.h5
+Epoch 49/150
+ - 2s - loss: 0.4903 - acc: 0.8223 - val_loss: 0.4161 - val_acc: 0.8646
+
+Epoch 00049: val_loss improved from 0.41846 to 0.41605, saving model to ./try/try_best_weights.h5
+Epoch 50/150
+ - 2s - loss: 0.4894 - acc: 0.8223 - val_loss: 0.4139 - val_acc: 0.8646
+
+Epoch 00050: val_loss improved from 0.41605 to 0.41389, saving model to ./try/try_best_weights.h5
+Epoch 51/150
+ - 2s - loss: 0.4885 - acc: 0.8223 - val_loss: 0.4119 - val_acc: 0.8646
+
+Epoch 00051: val_loss improved from 0.41389 to 0.41194, saving model to ./try/try_best_weights.h5
+Epoch 52/150
+ - 2s - loss: 0.4877 - acc: 0.8223 - val_loss: 0.4102 - val_acc: 0.8646
+
+Epoch 00052: val_loss improved from 0.41194 to 0.41019, saving model to ./try/try_best_weights.h5
+Epoch 53/150
+ - 2s - loss: 0.4867 - acc: 0.8223 - val_loss: 0.4086 - val_acc: 0.8646
+
+Epoch 00053: val_loss improved from 0.41019 to 0.40860, saving model to ./try/try_best_weights.h5
+Epoch 54/150
+ - 2s - loss: 0.4865 - acc: 0.8223 - val_loss: 0.4072 - val_acc: 0.8646
+
+Epoch 00054: val_loss improved from 0.40860 to 0.40715, saving model to ./try/try_best_weights.h5
+Epoch 55/150
+ - 2s - loss: 0.4856 - acc: 0.8223 - val_loss: 0.4058 - val_acc: 0.8646
+
+Epoch 00055: val_loss improved from 0.40715 to 0.40582, saving model to ./try/try_best_weights.h5
+Epoch 56/150
+ - 2s - loss: 0.4856 - acc: 0.8223 - val_loss: 0.4047 - val_acc: 0.8646
+
+Epoch 00056: val_loss improved from 0.40582 to 0.40470, saving model to ./try/try_best_weights.h5
+Epoch 57/150
+ - 2s - loss: 0.4858 - acc: 0.8223 - val_loss: 0.4037 - val_acc: 0.8646
+
+Epoch 00057: val_loss improved from 0.40470 to 0.40370, saving model to ./try/try_best_weights.h5
+Epoch 58/150
+ - 2s - loss: 0.4839 - acc: 0.8223 - val_loss: 0.4027 - val_acc: 0.8646
+
+Epoch 00058: val_loss improved from 0.40370 to 0.40275, saving model to ./try/try_best_weights.h5
+Epoch 59/150
