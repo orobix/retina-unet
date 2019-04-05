@@ -250,3 +250,19 @@ Epoch 58/150
 
 Epoch 00058: val_loss improved from 0.40370 to 0.40275, saving model to ./try/try_best_weights.h5
 Epoch 59/150
+ - 2s - loss: 0.4855 - acc: 0.8223 - val_loss: 0.4020 - val_acc: 0.8646
+
+Epoch 00059: val_loss improved from 0.40275 to 0.40198, saving model to ./try/try_best_weights.h5
+Epoch 60/150
+ - 2s - loss: 0.4852 - acc: 0.8223 - val_loss: 0.4013 - val_acc: 0.8646
+
+Epoch 00060: val_loss improved from 0.40198 to 0.40128, saving model to ./try/try_best_weights.h5
+Epoch 61/150
+ - 2s - loss: 0.4845 - acc: 0.8223 - val_loss: 0.4007 - val_acc: 0.8646
+
+Epoch 00061: val_loss improved from 0.40128 to 0.40065, saving model to ./try/try_best_weights.h5
+Epoch 62/150
+ - 2s - loss: 0.4845 - acc: 0.8223 - val_loss: 0.4001 - val_acc: 0.8646
+
+Epoch 00062: val_loss improved from 0.40065 to 0.40008, saving model to ./try/try_best_weights.h5
+Epoch 63/150
