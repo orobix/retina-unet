@@ -237,8 +237,8 @@ visualize(group_images(patches_masks_train[0:N_sample,:,:,:],5),'./'+name_experi
 n_ch = patches_imgs_train.shape[1]
 patch_height = patches_imgs_train.shape[2]
 patch_width = patches_imgs_train.shape[3]
-#model = get_unet(n_ch, patch_height, patch_width)  #the U-net model
-model = resnet_50(n_ch, patch_height, patch_width)  #the ResNet model
+model = get_unet(n_ch, patch_height, patch_width)  #the U-net model
+#model = resnet_50(n_ch, patch_height, patch_width)  #the ResNet model
 print("Check: final output of the network:")
 print(model.output_shape)
 plot(model, to_file='./'+name_experiment+'/'+name_experiment + '_model.png')   #check how the model looks like
@@ -261,15 +261,11 @@ checkpointer = ModelCheckpoint(filepath='./'+name_experiment+'/'+name_experiment
 # lrate_drop = LearningRateScheduler(step_decay)
 
 patches_masks_train = masks_Unet(patches_masks_train)  #reduce memory consumption
-model.fit(patches_imgs_train, patches_masks_train, nb_epoch=N_epochs, batch_size=batch_size, verbose=2, shuffle=True, validation_split=0.1, callbacks=[checkpointer])
+model.fit(patches_imgs_train, patches_masks_train, epochs=N_epochs, batch_size=batch_size, verbose=2, shuffle=True, validation_split=0.1, callbacks=[checkpointer])
 
 
 #========== Save and test the last model ===================
 model.save_weights('./'+name_experiment+'/'+name_experiment +'_last_weights.h5', overwrite=True)
-#test the model
-# score = model.evaluate(patches_imgs_test, masks_Unet(patches_masks_test), verbose=0)
-# print('Test score:', score[0])
-# print('Test accuracy:', score[1])
 
 
 
