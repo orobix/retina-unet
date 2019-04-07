@@ -1,4 +1,7 @@
 *~
 *.pyc
 .DS_Store
+__MAC*
 DRIVE_datasets_training_testing
+DRIVE_datasets_training_testin
+Synth*
