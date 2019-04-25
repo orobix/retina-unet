@@ -11,7 +11,8 @@ borderMasks_imgs_test = ./DRIVE/test/mask/
 path = ./DRIVE_datasets/
 # 20 * 9500
 N_subimgs = 190000
-N_imgs = 20
+N_imgs_test = 20
+N_imgs_train = 20
 
 [Synth]
 #train
@@ -24,8 +25,9 @@ groundTruth_imgs_test = ./Synth/test/groundtruths/
 borderMasks_imgs_test = ./DRIVE/test/mask/
 path = ./Synth_datasets/
 # 9000*9500
-N_subimgs = 85500000 
-N_imgs = 9000
+N_subimgs = 85500000
+N_imgs_test = 1000
+N_imgs_train = 9000
 
 [global]
 hdf5_batch_size = 5000

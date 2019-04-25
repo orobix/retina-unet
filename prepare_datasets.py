@@ -13,17 +13,23 @@ import configparser
 
 #config file to read from
 config = configparser.RawConfigParser()
-config.readfp(open(r'./global_config.txt'))
+config.read('./global_config.txt')
 
 batch_size = int(config['global']['hdf5_batch_size'])
 
 def write_hdf5(arr,outfile):
-  with h5py.File(outfile,"w") as f:
-    f.create_dataset("image", data=arr, dtype=arr.dtype)
+    with h5py.File(outfile,"w") as f:
+        f.create_dataset("image", data=arr, dtype=arr.dtype)
 
 def write_virtual_layout(layout, output):
     with h5py.File(output, 'w', libver='latest') as f:
         f.create_virtual_dataset('image', layout, fillvalue=-5)
+
+def reset_vars(shape, virtual_shape):
+    return np.empty(shape, dtype=np.uint8), h5py.VirtualLayout(shape=virtual_shape, dtype=np.uint8), 0, False
+
+def get_filename(dataset_path, suffix, train_test, fileCounter):
+    return dataset_path + "dataset_" + suffix + "_" + train_test + str(fileCounter) + ".hdf5"
 
 def get_datasets(
     dataset_path,
@@ -40,10 +46,8 @@ def get_datasets(
 
     if Nimgs > batch_size:
         Nimgs = batch_size
-    imgs = np.empty((Nimgs,height,width,channels), dtype=np.uint8)
-    layout = h5py.VirtualLayout(shape=(total_imgs,channels,height,width), dtype=np.uint8)
-    fileCounter = 0
-    readFile = False
+    shape = (Nimgs,height,width, channels)
+    imgs, layout, fileCounter, readFile = reset_vars(shape, (total_imgs, channels, height, width))
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
         for i in range(len(files)):
             #original
@@ -57,33 +61,30 @@ def get_datasets(
             if i % batch_size == (batch_size - 1):
                 imgs = np.transpose(imgs,(0,3,1,2))
                 assert(imgs.shape == (Nimgs,channels,height,width))
-                filename = dataset_path + "dataset_imgs_" + train_test + str(fileCounter) + ".hdf5"
+                filename = get_filename(dataset_path, 'imgs', train_test, fileCounter)
                 print("writing " + filename)
                 write_hdf5(imgs, filename)
-                vsource = h5py.VirtualSource(filename, 'iamge', shape=(Nimgs,channels,height,width))
-                layout[fileCounter] = vsource
+                vsource = h5py.VirtualSource(filename, 'image', shape=imgs.shape)
+                layout[fileCounter * Nimgs : (fileCounter + 1) * Nimgs] = vsource
                 fileCounter += 1
                 readFile = False
-                imgs = np.empty((Nimgs,height,width,channels), dtype=np.uint8)
+                imgs = np.empty(shape, dtype=np.uint8)
 
     if readFile:
         imgs = np.transpose(imgs[:total_imgs % batch_size],(0,3,1,2))
         assert(imgs.shape == (total_imgs % batch_size,channels,height,width))
-        filename = dataset_path + "dataset_imgs_" + train_test + str(fileCounter) + ".hdf5"
+        filename = get_filename(dataset_path, 'imgs', train_test, fileCounter)
         print("writing " + filename)
         write_hdf5(imgs, filename)
-        vsource = h5py.VirtualSource(filename, 'image', shape=(Nimgs,channels,height,width))
-        layout[fileCounter] = vsource
+        vsource = h5py.VirtualSource(filename, 'image', shape=imgs.shape)
+        layout[fileCounter * Nimgs : ] = vsource
 
     # write layout
     print(layout.shape)
-    print(layout.shape )
     write_virtual_layout(layout, dataset_path + "dataset_imgs_" + train_test + ".hdf5")
-                
-    fileCounter = 0
-    readFile = False
-    layout = h5py.VirtualLayout(shape=(total_imgs,1,height,width), dtype=np.uint8)
-    imgs = np.empty((Nimgs,height,width), dtype=np.uint8)
+
+    shape = (Nimgs, height, width)
+    imgs, layout, fileCounter, readFile = reset_vars(shape, (total_imgs,1,height,width))
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
         for i in range(len(files)):
             #ground truth
@@ -99,11 +100,11 @@ def get_datasets(
                 assert(np.min(imgs)==0)
                 imgs = np.reshape(imgs,(Nimgs,1,height,width))
                 assert(imgs.shape == (Nimgs,1,height,width))
-                filename = dataset_path + "dataset_groundTruh_" + train_test + str(fileCounter) + ".hdf5"
+                filename = get_filename(dataset_path, 'groundTruth', train_test, fileCounter)
                 print("writing " + filename)
                 write_hdf5(imgs, filename)
-                vsource = h5py.VirtualSource(filename, 'image', shape=(Nimgs,1,height,width))
-                layout[fileCounter] = vsource
+                vsource = h5py.VirtualSource(filename, 'image', shape=imgs.shape)
+                layout[fileCounter * Nimgs : (fileCounter + 1) * Nimgs] = vsource
                 fileCounter += 1
                 readFile = False
                 imgs = np.empty((Nimgs,height,width), dtype=np.uint8)
@@ -111,19 +112,16 @@ def get_datasets(
     if readFile:
         imgs = np.reshape(imgs[:total_imgs % batch_size],(total_imgs % batch_size,1,height,width))
         assert(imgs.shape == (total_imgs % batch_size,1,height,width))
-        filename = dataset_path + "dataset_groundTruh_" + train_test + str(fileCounter) + ".hdf5"
+        filename = get_filename(dataset_path, 'groundTruth', train_test, fileCounter)
         print("writing " + filename)
         write_hdf5(imgs, filename)
-        vsource = h5py.VirtualSource(filename, 'image', shape=(Nimgs,1,height,width))
-        layout[fileCounter] = vsource
+        vsource = h5py.VirtualSource(filename, 'image', shape=imgs.shape)
+        layout[fileCounter * Nimgs : ] = vsource
 
     # write virtual layout
-    write_virtual_layout(layout, dataset_path + "dataset_groundTruh_" + train_test + ".hdf5")
+    write_virtual_layout(layout, dataset_path + "dataset_groundTruth_" + train_test + ".hdf5")
 
-    fileCounter = 0
-    readFile = False
-    layout = h5py.VirtualLayout(shape=(total_imgs,1,height,width), dtype=np.uint8)
-    imgs = np.empty((Nimgs,height,width), dtype=np.uint8)
+    imgs, layout, fileCounter, readFile = reset_vars(shape, (total_imgs,1,height,width))
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
         for i in range(len(files)):
             #border masks
@@ -141,11 +139,11 @@ def get_datasets(
             if i % batch_size == (batch_size - 1):
                 imgs = np.reshape(imgs,(Nimgs,1,height,width))
                 assert(imgs.shape == (Nimgs,1,height,width))
-                filename = dataset_path + "dataset_borderMasks_" + train_test + str(fileCounter) + ".hdf5"
+                filename = get_filename(dataset_path, 'borderMasks', train_test, fileCounter)
                 print("writing " + filename)
                 write_hdf5(imgs, filename)
-                vsource = h5py.VirtualSource(filename, 'image', shape=(Nimgs,1,height,width))
-                layout[fileCounter] = vsource
+                vsource = h5py.VirtualSource(filename, 'image', shape=imgs.shape)
+                layout[fileCounter * Nimgs : (fileCounter + 1) * Nimgs] = vsource
                 fileCounter += 1
                 readFile = False
                 imgs = np.empty((Nimgs,height,width), dtype=np.uint8)
@@ -153,11 +151,11 @@ def get_datasets(
     if readFile:
         imgs = np.reshape(imgs[:total_imgs % batch_size],(total_imgs % batch_size,1,height,width))
         assert(imgs.shape == (total_imgs % batch_size,1,height,width))
-        filename = dataset_path + "dataset_borderMasks_" + train_test + str(fileCounter) + ".hdf5"
+        filename = get_filename(dataset_path, 'borderMasks', train_test, fileCounter)
         print("writing " + filename)
         write_hdf5(imgs, filename)
-        vsource = h5py.VirtualSource(filename, 'image', shape=(Nimgs,1,height,width))
-        layout[fileCounter] = vsource
+        vsource = h5py.VirtualSource(filename, 'image', shape=imgs.shape)
+        layout[fileCounter * Nimgs :] = vsource
 
     # write_virtual_layout
     write_virtual_layout(layout, dataset_path + "dataset_borderMasks_" + train_test + ".hdf5")
@@ -168,21 +166,11 @@ def prepare_dataset(configuration):
 
     if not os.path.exists(dataset_path):
         os.makedirs(dataset_path)
-    #getting the training datasets
-    get_datasets(
-        dataset_path,
-        int(configuration['N_imgs']),
-        configuration['original_imgs_train'],
-        configuration['groundTruth_imgs_train'],
-        configuration['borderMasks_imgs_train'],
-        "train"
-    )
-    print("train data done!")
-
+    
     #getting the testing datasets
     get_datasets(
         dataset_path,
-        int(configuration['N_imgs']),        
+        int(configuration['N_imgs_test']),        
         configuration['original_imgs_test'],
         configuration['groundTruth_imgs_test'],
         configuration['borderMasks_imgs_test'],
@@ -190,10 +178,20 @@ def prepare_dataset(configuration):
     )
     print ("test data done!")
 
+    #getting the training datasets
+    get_datasets(
+        dataset_path,
+        int(configuration['N_imgs_train']),
+        configuration['original_imgs_train'],
+        configuration['groundTruth_imgs_train'],
+        configuration['borderMasks_imgs_train'],
+        "train"
+    )
+    print("train data done!")
 
-print();
+print("")
 print('batch_size: ' + str(batch_size))
 prepare_dataset(config['DRIVE'])
-print();
+print("")
 print('batch_size: ' + str(batch_size))
 prepare_dataset(config['Synth'])
