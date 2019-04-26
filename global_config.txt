@@ -31,6 +31,9 @@ N_imgs_train = 9000
 
 [global]
 hdf5_batch_size = 5000
+average_mode = True
+stride_height = 5
+stride_width = 5
 
 [data attributes]
 #Dimensions of the patches extracted from the full images

@@ -11,16 +11,25 @@ from PIL import Image
 import configparser
 import sys
 sys.path.insert(0, './lib/')
-from extract_patches import get_data_training
+from extract_patches import get_data_training, get_data_testing, get_data_testing_overlap
 
 
 #config file to read from
 config = configparser.RawConfigParser()
 config.read('./global_config.txt')
 
-batch_size = int(config['global']['hdf5_batch_size'])
-patch_h = int(config['data attributes']['patch_height'])
-patch_w = int(config['data attributes']['patch_width'])
+height = 565
+width = 565
+
+batch_size = int(config.get('global', 'hdf5_batch_size'))
+patch_h = int(config.get('data attributes', 'patch_height'))
+patch_w = int(config.get('data attributes', 'patch_width'))
+
+average_mode = config.get('global', 'average_mode')
+stride_h = int(config.get('global', 'stride_height'))
+stride_w = int(config.get('global', 'stride_width'))
+
+N_patches_per_img = ((height + stride_h - (height - patch_h) % stride_h - patch_h)//stride_h + 1)*((width + stride_w - (width - patch_w) % stride_w - patch_w)//stride_w + 1)
 
 def write_hdf5(arr,outfile):
     with h5py.File(outfile,"w") as f:
@@ -43,8 +52,6 @@ def get_datasets(
     train_test="null"
 ):
     channels = 3
-    height = 565
-    width = 565
     total_imgs = Nimgs
 
     if Nimgs > batch_size:
@@ -52,11 +59,10 @@ def get_datasets(
 
     shape_imgs = (Nimgs,height,width, channels)
     imgs = np.empty(shape_imgs, dtype=np.uint8)
-    layout_imgs = h5py.VirtualLayout(shape=(total_imgs * N_subimgs, 1, patch_h, patch_w), dtype=np.uint8)
-
+    layout_imgs = h5py.VirtualLayout(shape=(total_imgs * N_patches_per_img, 1, patch_h, patch_w), dtype=np.uint8)
     shape_gts = (Nimgs, height, width)
     g_truths = np.empty(shape_gts, dtype=np.uint8)
-    layout_gts = h5py.VirtualLayout(shape=(total_imgs * N_subimgs, 1, patch_h, patch_w), dtype=np.uint8)
+    layout_gts = h5py.VirtualLayout(shape=(total_imgs * N_patches_per_img, 1, patch_h, patch_w), dtype=np.uint8)
 
     fileCounter = 0
     readFile = False
@@ -91,13 +97,13 @@ def get_datasets(
                 print("writing " + filename_imgs)
                 write_hdf5(img_data, filename_imgs)
                 vsource_imgs = h5py.VirtualSource(filename_imgs, 'image', shape=img_data.shape)
-                layout_imgs[fileCounter * Nimgs * N_subimgs: (fileCounter + 1) * Nimgs * N_subimgs] = vsource_imgs
+                layout_imgs[fileCounter * img_data.shape[0]: (fileCounter + 1) * img_data.shape[0]] = vsource_imgs
                 
                 filename_gts = get_filename(dataset_path, 'groundTruths', train_test, fileCounter)
                 print("writing " + filename_gts)
                 write_hdf5(gt_data, filename_gts)
                 vsource_gts = h5py.VirtualSource(filename_gts, 'image', shape=gt_data.shape)
-                layout_gts[fileCounter * Nimgs * N_subimgs: (fileCounter + 1) * Nimgs * N_subimgs] = vsource_gts
+                layout_gts[fileCounter * gt_data.shape[0]: (fileCounter + 1) * gt_data.shape[0]] = vsource_gts
 
                 fileCounter += 1
                 readFile = False
@@ -117,20 +123,25 @@ def get_datasets(
 
         # extract patches
         img_data, gt_data = get_data(imgs, g_truths, N_subimgs, train_test)
+
         print(img_data.shape)
+        print(imgs.shape)
+
         filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
         print("writing " + filename_imgs)
         write_hdf5(img_data, filename_imgs)
         vsource_imgs = h5py.VirtualSource(filename_imgs, 'image', shape=img_data.shape)
-        layout_imgs[fileCounter * Nimgs * N_subimgs:] = vsource_imgs
+        layout_imgs[fileCounter * img_data.shape[0]:] = vsource_imgs
         
         filename_gts = get_filename(dataset_path, 'groundTruths', train_test, fileCounter)
         print("writing " + filename_gts)
         write_hdf5(gt_data, filename_gts)
         vsource_gts = h5py.VirtualSource(filename_gts, 'image', shape=gt_data.shape)
-        layout_gts[fileCounter * Nimgs * N_subimgs:] = vsource_gts
+        layout_gts[fileCounter * gt_data.shape[0]:] = vsource_gts
 
     # write layout
+    print(layout_gts.shape)
+    print(gt_data.shape)
     write_virtual_layout(layout_imgs, dataset_path + "dataset_imgs_" + train_test + ".hdf5")
     write_virtual_layout(layout_gts, dataset_path + "dataset_groundTruths_" + train_test + ".hdf5")
 
@@ -142,16 +153,16 @@ def prepare_dataset(configuration):
         os.makedirs(dataset_path)
     
     #getting the testing datasets
-    get_datasets(
-        dataset_path,
-        int(configuration['N_imgs_test']),        
-        configuration['original_imgs_test'],
-        configuration['groundTruth_imgs_test'],
-        configuration['borderMasks_imgs_test'],
-        int(configuration['N_subimgs']),
-        "test"
-    )
-    print ("test data done!")
+    # get_datasets(
+    #     dataset_path,
+    #     int(configuration['N_imgs_test']),        
+    #     configuration['original_imgs_test'],
+    #     configuration['groundTruth_imgs_test'],
+    #     configuration['borderMasks_imgs_test'],
+    #     int(configuration['N_subimgs']),
+    #     "test"
+    # )
+    # print ("test data done!")
 
     #getting the training datasets
     get_datasets(
@@ -166,17 +177,38 @@ def prepare_dataset(configuration):
     print("train data done!")
 
 def get_data(imgs, gts, subimgs, test_train):
-    train, test = get_data_training(
-        imgs,
-        gts,
-        patch_height = int(config.get('data attributes', 'patch_height')),
-        patch_width = int(config.get('data attributes', 'patch_width')),
-        N_subimgs = subimgs,
-        inside_FOV = config.getboolean('data attributes', 'inside_FOV') #select the patches only inside the FOV  (default == True)
-    )
+    if test_train == 'train':
+        img_patches, gt_patches = get_data_training(
+            imgs,
+            gts,
+            patch_h,
+            patch_w,
+            subimgs,
+            inside_FOV = config.getboolean('data attributes', 'inside_FOV') #select the patches only inside the FOV  (default == True)
+        )
+        print(img_patches.shape)
+        permutation = np.random.permutation(img_patches.shape[0])
+        img_patches, gt_patches = img_patches[permutation], gt_patches[permutation]
+    elif average_mode:
+        img_patches, _, _, gt_patches = get_data_testing_overlap(
+            imgs,
+            gts,
+            imgs.shape[0],
+            patch_h,
+            patch_w,
+            stride_h,
+            stride_w
+        )
+    else:
+        img_patches, _, _, gt_patches = get_data_testing(
+            imgs,
+            gts,
+            imgs.shape[0],
+            patch_h,
+            patch_w
+        )
 
-    permutation = np.random.permutation(train.shape[0])
-    return train[permutation], test[permutation]
+    return img_patches, gt_patches
 
 print("")
 print('batch_size: ' + str(batch_size))

@@ -77,7 +77,7 @@ new_width = None
 masks_test  = None
 patches_masks_test = None
 if average_mode == True:
-    patches_imgs_test, new_height, new_width, masks_test = get_data_testing_overlap(
+    patches_imgs_test, masks_test = get_data_testing_overlap(
         DRIVE_test_imgs_original = DRIVE_test_imgs_original,  #original
         DRIVE_test_groudTruth = path_data + config.get('data paths', 'test_groundTruth'),  #masks
         Imgs_to_test = int(config.get('testing settings', 'full_images_to_test')),

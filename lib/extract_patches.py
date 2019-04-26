@@ -44,10 +44,7 @@ def get_data_training(imgs,
 
 
 #Load the original data and return the extracted patches for training/testing
-def get_data_testing(DRIVE_test_imgs_original, DRIVE_test_groudTruth, Imgs_to_test, patch_height, patch_width):
-    ### test
-    test_imgs_original = load_hdf5(DRIVE_test_imgs_original)
-    test_groundTruths = load_hdf5(DRIVE_test_groudTruth)
+def get_data_testing(test_imgs_original, test_groundTruths, Imgs_to_test, patch_height, patch_width):
 
     test_imgs = my_PreProc(test_imgs_original)
     test_groundTruths = test_groundTruths/255.
@@ -84,36 +81,34 @@ def get_data_testing(DRIVE_test_imgs_original, DRIVE_test_groudTruth, Imgs_to_te
 
 # Load the original data and return the extracted patches for testing
 # return the ground truth in its original shape
-def get_data_testing_overlap(DRIVE_test_imgs_original, DRIVE_test_groudTruth, Imgs_to_test, patch_height, patch_width, stride_height, stride_width):
-    ### test
-    test_imgs_original = load_hdf5(DRIVE_test_imgs_original)
-    test_masks = load_hdf5(DRIVE_test_groudTruth)
-
+def get_data_testing_overlap(test_imgs_original, test_groundTruths, Imgs_to_test, patch_height, patch_width, stride_height, stride_width):
     test_imgs = my_PreProc(test_imgs_original)
-    test_masks = test_masks/255.
+    test_groundTruths = test_groundTruths/255.
     #extend both images and masks so they can be divided exactly by the patches dimensions
     test_imgs = test_imgs[0:Imgs_to_test,:,:,:]
-    test_masks = test_masks[0:Imgs_to_test,:,:,:]
+    test_groundTruths = test_groundTruths[0:Imgs_to_test,:,:,:]
     test_imgs = paint_border_overlap(test_imgs, patch_height, patch_width, stride_height, stride_width)
+    test_groundTruths = paint_border_overlap(test_groundTruths, patch_height, patch_width, stride_height, stride_width)
 
     #check masks are within 0-1
-    assert(np.max(test_masks)==1  and np.min(test_masks)==0)
+    assert(np.max(test_groundTruths)==1  and np.min(test_groundTruths)==0)
 
     print("\ntest images shape:")
     print(test_imgs.shape)
     print("\ntest mask shape:")
-    print(test_masks.shape)
+    print(test_groundTruths.shape)
     print("test images range (min-max): " +str(np.min(test_imgs)) +' - '+str(np.max(test_imgs)))
     print("test masks are within 0-1\n")
 
     #extract the TEST patches from the full images
     patches_imgs_test = extract_ordered_overlap(test_imgs,patch_height,patch_width,stride_height,stride_width)
+    patches_masks_test = extract_ordered_overlap(test_groundTruths,patch_height,patch_width,stride_height,stride_width)
 
     print("\ntest PATCHES images shape:")
     print(patches_imgs_test.shape)
     print("test PATCHES images range (min-max): " +str(np.min(patches_imgs_test)) +' - '+str(np.max(patches_imgs_test)))
 
-    return patches_imgs_test, test_imgs.shape[2], test_imgs.shape[3], test_masks
+    return patches_imgs_test, test_imgs.shape[2], test_imgs.shape[3], patches_masks_test
 
 
 #data consinstency check
