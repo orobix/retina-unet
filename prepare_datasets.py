@@ -53,16 +53,19 @@ def get_datasets(
 ):
     channels = 3
     total_imgs = Nimgs
+    patches = total_imgs * N_subimgs
+    if train_test == 'test':
+        patches = total_imgs * N_patches_per_img
 
     if Nimgs > batch_size:
         Nimgs = batch_size
 
     shape_imgs = (Nimgs,height,width, channels)
     imgs = np.empty(shape_imgs, dtype=np.uint8)
-    layout_imgs = h5py.VirtualLayout(shape=(total_imgs * N_patches_per_img, 1, patch_h, patch_w), dtype=np.uint8)
+    layout_imgs = h5py.VirtualLayout(shape=(patches, 1, patch_h, patch_w), dtype=np.uint8)
     shape_gts = (Nimgs, height, width)
     g_truths = np.empty(shape_gts, dtype=np.uint8)
-    layout_gts = h5py.VirtualLayout(shape=(total_imgs * N_patches_per_img, 1, patch_h, patch_w), dtype=np.uint8)
+    layout_gts = h5py.VirtualLayout(shape=(patches, 1, patch_h, patch_w), dtype=np.uint8)
 
     fileCounter = 0
     readFile = False
@@ -142,6 +145,8 @@ def get_datasets(
     # write layout
     print(layout_gts.shape)
     print(gt_data.shape)
+    print(layout_imgs.shape)
+    print(img_data.shape)
     write_virtual_layout(layout_imgs, dataset_path + "dataset_imgs_" + train_test + ".hdf5")
     write_virtual_layout(layout_gts, dataset_path + "dataset_groundTruths_" + train_test + ".hdf5")
 
