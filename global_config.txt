@@ -9,8 +9,8 @@ original_imgs_test = ./DRIVE/test/images/
 groundTruth_imgs_test = ./DRIVE/test/1st_manual/
 borderMasks_imgs_test = ./DRIVE/test/mask/
 path = ./DRIVE_datasets/
-# 20 * 9500
-N_subimgs = 190000
+# per image
+N_subimgs = 9500
 N_imgs_test = 20
 N_imgs_train = 20
 
@@ -24,10 +24,16 @@ original_imgs_test = ./Synth/test/images/
 groundTruth_imgs_test = ./Synth/test/groundtruths/
 borderMasks_imgs_test = ./DRIVE/test/mask/
 path = ./Synth_datasets/
-# 9000*9500
-N_subimgs = 85500000
+# per image
+N_subimgs = 9500
 N_imgs_test = 1000
 N_imgs_train = 9000
 
 [global]
 hdf5_batch_size = 5000
+
+[data attributes]
+#Dimensions of the patches extracted from the full images
+patch_height = 48 
+patch_width = 48
+inside_FOV = False

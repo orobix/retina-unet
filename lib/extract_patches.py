@@ -13,62 +13,55 @@ from pre_processing import my_PreProc
 # random.seed(10)
 
 #Load the original data and return the extracted patches for training/testing
-def get_data_training(DRIVE_train_imgs_original,
-                      DRIVE_train_groudTruth,
+def get_data_training(imgs,
+                      groundTruths,
                       patch_height,
                       patch_width,
                       N_subimgs,
                       inside_FOV):
-    train_imgs_original = load_hdf5(DRIVE_train_imgs_original)
-    train_masks = load_hdf5(DRIVE_train_groudTruth) #masks always the same
-    # visualize(group_images(train_imgs_original[0:20,:,:,:],5),'imgs_train')#.show()  #check original imgs train
+    train_img = my_PreProc(imgs)
+    train_gt = groundTruths/255.
 
+    data_consistency_check(train_img,train_gt)
 
-    train_imgs = my_PreProc(train_imgs_original)
-    train_masks = train_masks/255.
+    #check gt are within 0-1
+    assert(np.min(train_gt)==0 and np.max(train_gt)==1)
 
-    train_imgs = train_imgs[:,:,9:574,:]  #cut bottom and top so now it is 565*565
-    train_masks = train_masks[:,:,9:574,:]  #cut bottom and top so now it is 565*565
-    data_consistency_check(train_imgs,train_masks)
-
-    #check masks are within 0-1
-    assert(np.min(train_masks)==0 and np.max(train_masks)==1)
-
-    print("\ntrain images/masks shape:")
-    print(train_imgs.shape)
-    print("train images range (min-max): " +str(np.min(train_imgs)) +' - '+str(np.max(train_imgs)))
-    print("train masks are within 0-1\n")
+    print("\ntrain images/gt shape:")
+    print(train_img.shape)
+    print("train images range (min-max): " +str(np.min(train_img)) +' - '+str(np.max(train_img)))
+    print("train gt are within 0-1\n")
 
     #extract the TRAINING patches from the full images
-    patches_imgs_train, patches_masks_train = extract_random(train_imgs,train_masks,patch_height,patch_width,N_subimgs,inside_FOV)
-    data_consistency_check(patches_imgs_train, patches_masks_train)
+    patches_imgs_train, patches_gt_train = extract_random(train_img,train_gt,patch_height,patch_width,N_subimgs * train_img.shape[0],inside_FOV)
+    data_consistency_check(patches_imgs_train, patches_gt_train)
 
-    print("\ntrain PATCHES images/masks shape:")
+    print("\ntrain PATCHES images/gt shape:")
     print(patches_imgs_train.shape)
     print("train PATCHES images range (min-max): " +str(np.min(patches_imgs_train)) +' - '+str(np.max(patches_imgs_train)))
 
-    return patches_imgs_train, patches_masks_train#, patches_imgs_test, patches_masks_test
+    return patches_imgs_train, patches_gt_train
 
 
 #Load the original data and return the extracted patches for training/testing
 def get_data_testing(DRIVE_test_imgs_original, DRIVE_test_groudTruth, Imgs_to_test, patch_height, patch_width):
     ### test
     test_imgs_original = load_hdf5(DRIVE_test_imgs_original)
-    test_masks = load_hdf5(DRIVE_test_groudTruth)
+    test_groundTruths = load_hdf5(DRIVE_test_groudTruth)
 
     test_imgs = my_PreProc(test_imgs_original)
-    test_masks = test_masks/255.
+    test_groundTruths = test_groundTruths/255.
 
     #extend both images and masks so they can be divided exactly by the patches dimensions
     test_imgs = test_imgs[0:Imgs_to_test,:,:,:]
-    test_masks = test_masks[0:Imgs_to_test,:,:,:]
+    test_groundTruths = test_groundTruths[0:Imgs_to_test,:,:,:]
     test_imgs = paint_border(test_imgs,patch_height,patch_width)
-    test_masks = paint_border(test_masks,patch_height,patch_width)
+    test_groundTruths = paint_border(test_groundTruths,patch_height,patch_width)
 
-    data_consistency_check(test_imgs, test_masks)
+    data_consistency_check(test_imgs, test_groundTruths)
 
     #check masks are within 0-1
-    assert(np.max(test_masks)==1  and np.min(test_masks)==0)
+    assert(np.max(test_groundTruths)==1  and np.min(test_groundTruths)==0)
 
     print("\ntest images/masks shape:")
     print(test_imgs.shape)
@@ -77,7 +70,7 @@ def get_data_testing(DRIVE_test_imgs_original, DRIVE_test_groudTruth, Imgs_to_te
 
     #extract the TEST patches from the full images
     patches_imgs_test = extract_ordered(test_imgs,patch_height,patch_width)
-    patches_masks_test = extract_ordered(test_masks,patch_height,patch_width)
+    patches_masks_test = extract_ordered(test_groundTruths,patch_height,patch_width)
     data_consistency_check(patches_imgs_test, patches_masks_test)
 
     print("\ntest PATCHES images/masks shape:")
@@ -136,7 +129,7 @@ def data_consistency_check(imgs,masks):
 #extract patches randomly in the full training images
 #  -- Inside OR in full image
 def extract_random(full_imgs,full_masks, patch_h,patch_w, N_patches, inside=True):
-    if (N_patches%full_imgs.shape[0] != 0):
+    if (N_patches % full_imgs.shape[0] != 0):
         print("N_patches: plase enter a multiple of 20")
         exit()
     assert (len(full_imgs.shape)==4 and len(full_masks.shape)==4)  #4D arrays
@@ -363,7 +356,7 @@ def pred_only_FOV(data_imgs,data_masks,original_imgs_border_masks):
     return new_pred_imgs, new_pred_masks
 
 #function to set to black everything outside the FOV, in a full image
-def kill_border(data, original_imgs_border_masks):
+def kill_border(data):
     assert (len(data.shape)==4)  #4D arrays
     assert (data.shape[1]==1 or data.shape[1]==3)  #check the channel is 1 or 3
     height = data.shape[2]
@@ -371,20 +364,16 @@ def kill_border(data, original_imgs_border_masks):
     for i in range(data.shape[0]):  #loop over the full images
         for x in range(width):
             for y in range(height):
-                if inside_FOV_DRIVE(i,x,y,original_imgs_border_masks)==False:
+                if is_inside_FOV(x, y, width, height)==False:
                     data[i,:,y,x]=0.0
 
 
-def inside_FOV_DRIVE(i, x, y, DRIVE_masks):
-    assert (len(DRIVE_masks.shape)==4)  #4D arrays
-    assert (DRIVE_masks.shape[1]==1)  #DRIVE masks is black and white
-    # DRIVE_masks = DRIVE_masks/255.  #NOOO!! otherwise with float numbers takes forever!!
-
-    if (x >= DRIVE_masks.shape[3] or y >= DRIVE_masks.shape[2]): #my image bigger than the original
-        return False
-
-    if (DRIVE_masks[i,0,y,x]>0):  #0==black pixels
-        # print DRIVE_masks[i,0,y,x]  #verify it is working right
+def is_inside_FOV(x,y,img_w,img_h):
+    x_ = x - int(img_w/2) # origin (0,0) shifted to image center
+    y_ = y - int(img_h/2)  # origin (0,0) shifted to image center
+    R_inside = 270
+    radius = np.sqrt((x_*x_)+(y_*y_))
+    if radius < R_inside:
         return True
     else:
         return False

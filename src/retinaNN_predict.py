@@ -69,14 +69,6 @@ N_visual = int(config.get('testing settings', 'N_group_visual'))
 average_mode = config.getboolean('testing settings', 'average_mode')
 
 
-# #ground truth
-# gtruth= path_data + config.get('data paths', 'test_groundTruth')
-# img_truth= load_hdf5(gtruth)
-# visualize(group_images(test_imgs_orig[0:20,:,:,:],5),'original')#.show()
-# visualize(group_images(test_border_masks[0:20,:,:,:],5),'borders')#.show()
-# visualize(group_images(img_truth[0:20,:,:,:],5),'gtruth')#.show()
-
-
 
 #============ Load the data and divide in patches
 patches_imgs_test = None
@@ -133,7 +125,7 @@ else:
     orig_imgs = recompone(patches_imgs_test,13,12)  # originals
     gtruth_masks = recompone(patches_masks_test,13,12)  #masks
 # apply the DRIVE masks on the repdictions #set everything outside the FOV to zero!!
-kill_border(pred_imgs, test_border_masks)  #DRIVE MASK  #only for visualization
+# kill_border(pred_imgs, test_border_masks)  #DRIVE MASK  #only for visualization
 ## back to original dimensions
 orig_imgs = orig_imgs[:,:,0:full_img_height,0:full_img_width]
 pred_imgs = pred_imgs[:,:,0:full_img_height,0:full_img_width]
