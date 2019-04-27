@@ -144,9 +144,7 @@ def get_datasets(
 
     # write layout
     print(layout_gts.shape)
-    print(gt_data.shape)
     print(layout_imgs.shape)
-    print(img_data.shape)
     write_virtual_layout(layout_imgs, dataset_path + "dataset_imgs_" + train_test + ".hdf5")
     write_virtual_layout(layout_gts, dataset_path + "dataset_groundTruths_" + train_test + ".hdf5")
 
@@ -158,16 +156,16 @@ def prepare_dataset(configuration):
         os.makedirs(dataset_path)
     
     #getting the testing datasets
-    # get_datasets(
-    #     dataset_path,
-    #     int(configuration['N_imgs_test']),        
-    #     configuration['original_imgs_test'],
-    #     configuration['groundTruth_imgs_test'],
-    #     configuration['borderMasks_imgs_test'],
-    #     int(configuration['N_subimgs']),
-    #     "test"
-    # )
-    # print ("test data done!")
+    get_datasets(
+        dataset_path,
+        int(configuration['N_imgs_test']),        
+        configuration['original_imgs_test'],
+        configuration['groundTruth_imgs_test'],
+        configuration['borderMasks_imgs_test'],
+        int(configuration['N_subimgs']),
+        "test"
+    )
+    print ("test data done!")
 
     #getting the training datasets
     get_datasets(
