@@ -95,6 +95,8 @@ def get_datasets(
 
                 # extract patches
                 img_data, gt_data = get_data(imgs, g_truths, N_subimgs, train_test)
+                img_data = np.array((img_data * 255), dtype=np.uint8)
+                gt_data = np.array((gt_data * 255), dtype=np.uint8)
                 
                 filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
                 print("writing " + filename_imgs)
@@ -126,9 +128,8 @@ def get_datasets(
 
         # extract patches
         img_data, gt_data = get_data(imgs, g_truths, N_subimgs, train_test)
-
-        print(img_data.shape)
-        print(imgs.shape)
+        img_data = np.array((img_data * 255), dtype=np.uint8)
+        gt_data = np.array((gt_data * 255), dtype=np.uint8)
 
         filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
         print("writing " + filename_imgs)
