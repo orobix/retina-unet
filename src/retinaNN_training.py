@@ -23,9 +23,6 @@ import sys
 sys.path.insert(0, './lib/')
 from help_functions import *
 
-#function to obtain data for training/testing (validation)
-from extract_patches import get_data_training
-
 
 
 #Define the neural network
@@ -217,20 +214,14 @@ batch_size = int(config.get('training settings', 'batch_size'))
 
 
 #============ Load the data and divided in patches
-patches_imgs_train, patches_masks_train = get_data_training(
-    DRIVE_train_imgs_original = path_data + config.get('data paths', 'train_imgs_original'),
-    DRIVE_train_groudTruth = path_data + config.get('data paths', 'train_groundTruth'),  #masks
-    patch_height = int(config.get('data attributes', 'patch_height')),
-    patch_width = int(config.get('data attributes', 'patch_width')),
-    N_subimgs = int(config.get('training settings', 'N_subimgs')),
-    inside_FOV = config.getboolean('training settings', 'inside_FOV') #select the patches only inside the FOV  (default == True)
-)
+patches_imgs_train = load_hdf5(config.get('data paths', 'train_imgs_original'))
+patches_masks_train = load_hdf5(config.get('data paths', 'train_groundTruth'))
 
 
 #========= Save a sample of what you're feeding to the neural network ==========
 N_sample = min(patches_imgs_train.shape[0],40)
-visualize(group_images(patches_imgs_train[0:N_sample,:,:,:],5),'./'+name_experiment+'/'+"sample_input_imgs")#.show()
-visualize(group_images(patches_masks_train[0:N_sample,:,:,:],5),'./'+name_experiment+'/'+"sample_input_masks")#.show()
+visualize(group_images(patches_imgs_train[0:20,:,:,:],5),'./'+name_experiment+'/'+"sample_input_imgs")#.show()
+visualize(group_images(patches_masks_train[0:20,:,:,:],5),'./'+name_experiment+'/'+"sample_input_masks")#.show()
 
 
 #=========== Construct and save the model arcitecture =====

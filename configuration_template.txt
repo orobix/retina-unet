@@ -14,6 +14,8 @@ path_local =  ./
 #Dimensions of the patches extracted from the full images
 patch_height = 48 
 patch_width = 48 
+img_height = 568
+img_width = 568
 
 [training settings]
 # number of total patches:

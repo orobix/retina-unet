@@ -43,14 +43,8 @@ config.read('configuration.txt')
 #run the training on invariant or local
 path_data = config.get('data paths', 'path_local')
 
-#original test images (for FOV selection)
-DRIVE_test_imgs_original = path_data + config.get('data paths', 'test_imgs_original')
-test_imgs_orig = load_hdf5(DRIVE_test_imgs_original)
-full_img_height = test_imgs_orig.shape[2]
-full_img_width = test_imgs_orig.shape[3]
-#the border masks provided by the DRIVE
-DRIVE_test_border_masks = path_data + config.get('data paths', 'test_border_masks')
-test_border_masks = load_hdf5(DRIVE_test_border_masks)
+full_img_height = config.get('data attributes', 'img_height')
+full_img_width = config.get('data attributes', 'img_width')
 # dimension of the patches
 patch_height = int(config.get('data attributes', 'patch_height'))
 patch_width = int(config.get('data attributes', 'patch_width'))
@@ -70,30 +64,8 @@ average_mode = config.getboolean('testing settings', 'average_mode')
 
 
 
-#============ Load the data and divide in patches
-patches_imgs_test = None
-new_height = None
-new_width = None
-masks_test  = None
-patches_masks_test = None
-if average_mode == True:
-    patches_imgs_test, masks_test = get_data_testing_overlap(
-        DRIVE_test_imgs_original = DRIVE_test_imgs_original,  #original
-        DRIVE_test_groudTruth = path_data + config.get('data paths', 'test_groundTruth'),  #masks
-        Imgs_to_test = int(config.get('testing settings', 'full_images_to_test')),
-        patch_height = patch_height,
-        patch_width = patch_width,
-        stride_height = stride_height,
-        stride_width = stride_width
-    )
-else:
-    patches_imgs_test, patches_masks_test = get_data_testing(
-        DRIVE_test_imgs_original = DRIVE_test_imgs_original,  #original
-        DRIVE_test_groudTruth = path_data + config.get('data paths', 'test_groundTruth'),  #masks
-        Imgs_to_test = int(config.get('testing settings', 'full_images_to_test')),
-        patch_height = patch_height,
-        patch_width = patch_width,
-    )
+#============ Load the data
+patches_imgs_test, masks_test = load_hdf5(config.get('data paths', 'test_imgs_original')), load_hdf5(config.get('data paths', 'test_groundTruth'))
 
 
 
@@ -116,9 +88,11 @@ pred_patches = pred_to_imgs(predictions, patch_height, patch_width, "original")
 pred_imgs = None
 orig_imgs = None
 gtruth_masks = None
+
+### TODO: batchwise recomponment
 if average_mode == True:
     pred_imgs = recompone_overlap(pred_patches, new_height, new_width, stride_height, stride_width)# predictions
-    orig_imgs = my_PreProc(test_imgs_orig[0:pred_imgs.shape[0],:,:,:])    #originals
+    orig_imgs = my_PreProc(test_imgs_orig[:20,:,:,:])    #originals
     gtruth_masks = masks_test  #ground truth masks
 else:
     pred_imgs = recompone(pred_patches,13,12)       # predictions
@@ -150,20 +124,18 @@ for i in range(int(N_predicted/group)):
 
 
 #====== Evaluate the results
-# print("\n\n========  Evaluate the results =======================")
+print("\n\n========  Evaluate the results =======================")
 # #predictions only inside the FOV
 # y_scores, y_true = pred_only_FOV(pred_imgs,gtruth_masks, test_border_masks)  #returns data only inside the FOV
 # print("Calculating results only inside the FOV:")
 # print("y scores pixels: " +str(y_scores.shape[0]) +" (radius 270: 270*270*3.14==228906), including background around retina: " +str(pred_imgs.shape[0]*pred_imgs.shape[2]*pred_imgs.shape[3]) +" (584*565==329960)")
 # print("y true pixels: " +str(y_true.shape[0]) +" (radius 270: 270*270*3.14==228906), including background around retina: " +str(gtruth_masks.shape[2]*gtruth_masks.shape[3]*gtruth_masks.shape[0])+" (584*565==329960)")
 
-# #Area under the ROC curve
-# print(y_true[0:2][:])
-# fpr, tpr, thresholds = roc_curve(y_true.astype(int), y_scores)  #round() or int()?
-# AUC_ROC = roc_auc_score(y_true.astype(int), y_scores)
-# # test_integral = np.trapz(tpr,fpr) #trapz is numpy integration
-# print("\nArea under the ROC curve: " +str(AUC_ROC))
-# roc_curve =plt.figure()
+#Area under the ROC curve
+fpr, tpr, thresholds = roc_curve(y_true.astype(int), y_scores)  #round() or int()?
+AUC_ROC = roc_auc_score(y_true.astype(int), y_scores)
+print("\nArea under the ROC curve: " +str(AUC_ROC))
+roc_curve=plt.figure()
 # plt.plot(fpr,tpr,'-',label='Area Under the Curve (AUC = %0.4f)' % AUC_ROC)
 # plt.title('ROC curve')
 # plt.xlabel("FPR (False Positive Rate)")
