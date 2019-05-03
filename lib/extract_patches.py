@@ -6,6 +6,10 @@ from help_functions import load_hdf5
 from help_functions import visualize
 from help_functions import group_images
 
+from skimage.util.shape import view_as_blocks
+from skimage.util.shape import view_as_windows
+from skimage.util.shape import pad
+
 from pre_processing import my_PreProc
 
 
@@ -22,7 +26,7 @@ def get_data_training(imgs,
     train_img = my_PreProc(imgs)
     train_gt = groundTruths/255.
 
-    data_consistency_check(train_img,train_gt)
+    data_consistency_check(train_img, train_gt)
 
     #check gt are within 0-1
     assert(np.min(train_gt)==0 and np.max(train_gt)==1)
@@ -33,7 +37,7 @@ def get_data_training(imgs,
     print("train gt are within 0-1\n")
 
     #extract the TRAINING patches from the full images
-    patches_imgs_train, patches_gt_train = extract_random(train_img,train_gt,patch_height,patch_width,N_subimgs * train_img.shape[0],inside_FOV)
+    patches_imgs_train, patches_gt_train = extract_random( train_img, train_gt, patch_height, patch_width, N_subimgs * train_img.shape[0], inside_FOV)
     data_consistency_check(patches_imgs_train, patches_gt_train)
 
     print("\ntrain PATCHES images/gt shape:")
@@ -50,10 +54,8 @@ def get_data_testing(test_imgs_original, test_groundTruths, Imgs_to_test, patch_
     test_groundTruths = test_groundTruths/255.
 
     #extend both images and masks so they can be divided exactly by the patches dimensions
-    test_imgs = test_imgs[0:Imgs_to_test,:,:,:]
-    test_groundTruths = test_groundTruths[0:Imgs_to_test,:,:,:]
-    test_imgs = paint_border(test_imgs,patch_height,patch_width)
-    test_groundTruths = paint_border(test_groundTruths,patch_height,patch_width)
+    test_imgs = test_imgs[:Imgs_to_test]
+    test_groundTruths = test_groundTruths[:Imgs_to_test]
 
     data_consistency_check(test_imgs, test_groundTruths)
 
@@ -66,8 +68,8 @@ def get_data_testing(test_imgs_original, test_groundTruths, Imgs_to_test, patch_
     print("test masks are within 0-1\n")
 
     #extract the TEST patches from the full images
-    patches_imgs_test = extract_ordered(test_imgs,patch_height,patch_width)
-    patches_masks_test = extract_ordered(test_groundTruths,patch_height,patch_width)
+    patches_imgs_test = extract_ordered(test_imgs, (patch_height, patch_width))
+    patches_masks_test = extract_ordered(test_groundTruths, (patch_height, patch_width))
     data_consistency_check(patches_imgs_test, patches_masks_test)
 
     print("\ntest PATCHES images/masks shape:")
@@ -85,10 +87,8 @@ def get_data_testing_overlap(test_imgs_original, test_groundTruths, Imgs_to_test
     test_imgs = my_PreProc(test_imgs_original)
     test_groundTruths = test_groundTruths/255.
     #extend both images and masks so they can be divided exactly by the patches dimensions
-    test_imgs = test_imgs[0:Imgs_to_test,:,:,:]
-    test_groundTruths = test_groundTruths[0:Imgs_to_test,:,:,:]
-    test_imgs = paint_border_overlap(test_imgs, patch_height, patch_width, stride_height, stride_width)
-    test_groundTruths = paint_border_overlap(test_groundTruths, patch_height, patch_width, stride_height, stride_width)
+    test_imgs = test_imgs[:Imgs_to_test]
+    test_groundTruths = test_groundTruths[:Imgs_to_test]
 
     #check masks are within 0-1
     assert(np.max(test_groundTruths)==1  and np.min(test_groundTruths)==0)
@@ -101,8 +101,8 @@ def get_data_testing_overlap(test_imgs_original, test_groundTruths, Imgs_to_test
     print("test masks are within 0-1\n")
 
     #extract the TEST patches from the full images
-    patches_imgs_test = extract_ordered_overlap(test_imgs,patch_height,patch_width,stride_height,stride_width)
-    patches_masks_test = extract_ordered_overlap(test_groundTruths,patch_height,patch_width,stride_height,stride_width)
+    patches_imgs_test = extract_ordered_overlap(test_imgs, (patch_height, patch_width), (stride_height,stride_width))
+    patches_masks_test = extract_ordered_overlap(test_groundTruths, (patch_height, patch_width), (stride_height, stride_width))
 
     print("\ntest PATCHES images shape:")
     print(patches_imgs_test.shape)
@@ -123,7 +123,7 @@ def data_consistency_check(imgs,masks):
 
 #extract patches randomly in the full training images
 #  -- Inside OR in full image
-def extract_random(full_imgs,full_masks, patch_h,patch_w, N_patches, inside=True):
+def extract_random(full_imgs, full_masks, patch_h,patch_w, N_patches, inside=True):
     if (N_patches % full_imgs.shape[0] != 0):
         print("N_patches: plase enter a multiple of 20")
         exit()
@@ -131,31 +131,34 @@ def extract_random(full_imgs,full_masks, patch_h,patch_w, N_patches, inside=True
     assert (full_imgs.shape[1]==1 or full_imgs.shape[1]==3)  #check the channel is 1 or 3
     assert (full_masks.shape[1]==1)   #masks only black and white
     assert (full_imgs.shape[2] == full_masks.shape[2] and full_imgs.shape[3] == full_masks.shape[3])
-    patches = np.empty((N_patches,full_imgs.shape[1],patch_h,patch_w))
-    patches_masks = np.empty((N_patches,full_masks.shape[1],patch_h,patch_w))
+
+    # init arrays
+    patches       = np.empty((N_patches, full_imgs.shape[1],  patch_h, patch_w))
+    patches_masks = np.empty((N_patches, full_masks.shape[1], patch_h, patch_w))
     img_h = full_imgs.shape[2]  #height of the full image
     img_w = full_imgs.shape[3] #width of the full image
+
     # (0,0) in the center of the image
     patch_per_img = int(N_patches/full_imgs.shape[0])  #N_patches equally divided in the full images
     print("patches per full image: " +str(patch_per_img))
-    iter_tot = 0   #iter over the total numbe rof patches (N_patches)
+
+    iter_tot = 0   #iter over the total number of patches (N_patches)
     for i in range(full_imgs.shape[0]):  #loop over the full images
-        k=0
-        while k <patch_per_img:
-            x_center = random.randint(0+int(patch_w/2),img_w-int(patch_w/2))
-            # print "x_center " +str(x_center)
-            y_center = random.randint(0+int(patch_h/2),img_h-int(patch_h/2))
-            # print "y_center " +str(y_center)
+        for k in range(patch_per_img):
+            x_center = random.randint(0 + int(patch_w/2), img_w - int(patch_w/2))
+            y_center = random.randint(0 + int(patch_h/2), img_h - int(patch_h/2))
             #check whether the patch is fully contained in the FOV
-            if inside==True:
-                if is_patch_inside_FOV(x_center,y_center,img_w,img_h,patch_h)==False:
-                    continue
-            patch = full_imgs[i,:,y_center-int(patch_h/2):y_center+int(patch_h/2),x_center-int(patch_w/2):x_center+int(patch_w/2)]
-            patch_mask = full_masks[i,:,y_center-int(patch_h/2):y_center+int(patch_h/2),x_center-int(patch_w/2):x_center+int(patch_w/2)]
-            patches[iter_tot]=patch
-            patches_masks[iter_tot]=patch_mask
-            iter_tot +=1   #total
-            k+=1  #per full_img
+            if inside and not is_patch_inside_FOV(x_center, y_center, img_w, img_h, patch_h):
+                continue
+            bounds_y = [y_center - int(patch_h/2), y_center + int(patch_h/2)]
+            bounds_x = [x_center - int(patch_w/2), x_center + int(patch_w/2)]
+
+            patch      = full_imgs[i, :, bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1]]
+            patch_mask = full_masks[i,:, bounds_y[0]: bounds_y[1], bounds_x[0]: bounds_x[1]]
+
+            patches[iter_tot] = patch
+            patches_masks[iter_tot] = patch_mask
+            iter_tot += 1   #total
     return patches, patches_masks
 
 
@@ -165,88 +168,66 @@ def is_patch_inside_FOV(x,y,img_w,img_h,patch_h):
     y_ = y - int(img_h/2)  # origin (0,0) shifted to image center
     R_inside = 270 - int(patch_h * np.sqrt(2.0) / 2.0) #radius is 270 (from DRIVE db docs), minus the patch diagonal (assumed it is a square #this is the limit to contain the full patch in the FOV
     radius = np.sqrt((x_*x_)+(y_*y_))
-    if radius < R_inside:
-        return True
+    return radius < R_inside
+
+
+#Divide all the full_imgs in pacthes
+def extract_ordered(full_imgs, patch_size):
+    _extract_patches(full_imgs, patch_size, (0, 0), False)
+
+def extract_ordered_overlap(full_imgs, patch_size, stride_size):
+    _extract_patches(full_imgs, patch_size, stride_size, True)
+
+# patch_size and stride_size => h x w
+def _extract_patches(full_imgs, patch_size, stride_size, overlap)
+    assert (len(full_imgs.shape)==4)  #4D arrays
+    assert (full_imgs.shape[1]==1 or full_imgs.shape[1]==3)  #check the channel is 1 or 3
+
+    img_h = full_imgs.shape[2]  #height of the full image
+    img_w = full_imgs.shape[3] #width of the full image
+
+    # prepare padding
+    if overlap:
+        N_patches, pad_by = get_padding_values(full_imgs[0,0].shape, stride_size)
     else:
-        return False
+        N_patches, pad_by = get_padding_values(full_imgs[0,0].shape, patch_size)
 
+    needs_padding = pad_by[0] > 0 or pad_by[1] > 0
+    # can be padded only on one side because border is 0 anyway
+    if needs_padding and full_imgs.shape[1] == 1:
+        pad_by = ((0, pad_by[0]), (0, pad_by[1]))
+    elif needs_padding:
+        pad_by = ((0, 0), (0, pad_by[0]), (0, pad_by[1])) # only pad img dont add another channel
 
-#Divide all the full_imgs in pacthes
-def extract_ordered(full_imgs, patch_h, patch_w):
-    assert (len(full_imgs.shape)==4)  #4D arrays
-    assert (full_imgs.shape[1]==1 or full_imgs.shape[1]==3)  #check the channel is 1 or 3
-    img_h = full_imgs.shape[2]  #height of the full image
-    img_w = full_imgs.shape[3] #width of the full image
-    N_patches_h = int(img_h/patch_h) #round to lowest int
-    if (img_h%patch_h != 0):
-        print("warning: " +str(N_patches_h) +" patches in height, with about " +str(img_h%patch_h) +" pixels left over")
-    N_patches_w = int(img_w/patch_w) #round to lowest int
-    if (img_h%patch_h != 0):
-        print("warning: " +str(N_patches_w) +" patches in width, with about " +str(img_w%patch_w) +" pixels left over")
-    print("number of patches per image: " +str(N_patches_h*N_patches_w))
-    N_patches_tot = (N_patches_h*N_patches_w)*full_imgs.shape[0]
-    patches = np.empty((N_patches_tot,full_imgs.shape[1],patch_h,patch_w))
+    patches_per_img = N_patches[0] * N_patches[1]
+    print("number of patches per image: " + str(patches_per_img))
+    N_patches_tot = patches_per_img * full_imgs.shape[0]
+    patches = np.empty((N_patches_tot, full_imgs.shape[1], patch_size[0], patch_size[1]))
 
     iter_tot = 0   #iter over the total number of patches (N_patches)
     for i in range(full_imgs.shape[0]):  #loop over the full images
-        for h in range(N_patches_h):
-            for w in range(N_patches_w):
-                patch = full_imgs[i,:,h*patch_h:(h*patch_h)+patch_h,w*patch_w:(w*patch_w)+patch_w]
-                patches[iter_tot]=patch
-                iter_tot +=1   #total
-    assert (iter_tot==N_patches_tot)
+        img = full_imgs[i]
+        # pad if needed
+        if needs_padding:
+            img = pad(img, pad_by, 'constant', constant_values=0)
+        
+        if not overlap:
+            patches_of_img = view_as_blocks(img, patch_size)
+        else:
+            patches_of_img = view_as_windows(img, patch_size, step_size)
+        patches[i * patches_per_img : (i + 1) * patches_per_img] = patches_of_img
+        iter_tot += patches_of_img * 
+    assert (iter_tot == N_patches_tot)
     return patches  #array with all the full_imgs divided in patches
 
+def get_padding_values(img_shape, divider):
+    img_shape = np.array(img_shape)
+    divider = np.array(divider)
+    residual = img_shape % divider
+    N_patches = np.ceil(img_shape / divider)
+    pad_by = np.array(divider) - residual
 
-def paint_border_overlap(full_imgs, patch_h, patch_w, stride_h, stride_w):
-    assert (len(full_imgs.shape)==4)  #4D arrays
-    assert (full_imgs.shape[1]==1 or full_imgs.shape[1]==3)  #check the channel is 1 or 3
-    img_h = full_imgs.shape[2]  #height of the full image
-    img_w = full_imgs.shape[3] #width of the full image
-    leftover_h = (img_h-patch_h)%stride_h  #leftover on the h dim
-    leftover_w = (img_w-patch_w)%stride_w  #leftover on the w dim
-    if (leftover_h != 0):  #change dimension of img_h
-        print("\nthe side H is not compatible with the selected stride of " +str(stride_h))
-        print("img_h " +str(img_h) + ", patch_h " +str(patch_h) + ", stride_h " +str(stride_h))
-        print("(img_h - patch_h) MOD stride_h: " +str(leftover_h))
-        print("So the H dim will be padded with additional " +str(stride_h - leftover_h) + " pixels")
-        tmp_full_imgs = np.zeros((full_imgs.shape[0],full_imgs.shape[1],img_h+(stride_h-leftover_h),img_w))
-        tmp_full_imgs[0:full_imgs.shape[0],0:full_imgs.shape[1],0:img_h,0:img_w] = full_imgs
-        full_imgs = tmp_full_imgs
-    if (leftover_w != 0):   #change dimension of img_w
-        print("the side W is not compatible with the selected stride of " +str(stride_w))
-        print("img_w " +str(img_w) + ", patch_w " +str(patch_w) + ", stride_w " +str(stride_w))
-        print("(img_w - patch_w) MOD stride_w: " +str(leftover_w))
-        print("So the W dim will be padded with additional " +str(stride_w - leftover_w) + " pixels")
-        tmp_full_imgs = np.zeros((full_imgs.shape[0],full_imgs.shape[1],full_imgs.shape[2],img_w+(stride_w - leftover_w)))
-        tmp_full_imgs[0:full_imgs.shape[0],0:full_imgs.shape[1],0:full_imgs.shape[2],0:img_w] = full_imgs
-        full_imgs = tmp_full_imgs
-    print("new full images shape: \n" +str(full_imgs.shape))
-    return full_imgs
-
-#Divide all the full_imgs in pacthes
-def extract_ordered_overlap(full_imgs, patch_h, patch_w,stride_h,stride_w):
-    assert (len(full_imgs.shape)==4)  #4D arrays
-    assert (full_imgs.shape[1]==1 or full_imgs.shape[1]==3)  #check the channel is 1 or 3
-    img_h = full_imgs.shape[2]  #height of the full image
-    img_w = full_imgs.shape[3] #width of the full image
-    assert ((img_h-patch_h)%stride_h==0 and (img_w-patch_w)%stride_w==0)
-    N_patches_img = ((img_h-patch_h)//stride_h+1)*((img_w-patch_w)//stride_w+1)  #// --> division between integers
-    N_patches_tot = N_patches_img*full_imgs.shape[0]
-    print("Number of patches on h : " +str(((img_h-patch_h)//stride_h+1)))
-    print("Number of patches on w : " +str(((img_w-patch_w)//stride_w+1)))
-    print("number of patches per image: " +str(N_patches_img) +", totally for this dataset: " +str(N_patches_tot))
-    patches = np.empty((N_patches_tot,full_imgs.shape[1],patch_h,patch_w))
-    iter_tot = 0   #iter over the total number of patches (N_patches)
-    for i in range(full_imgs.shape[0]):  #loop over the full images
-        for h in range((img_h-patch_h)//stride_h+1):
-            for w in range((img_w-patch_w)//stride_w+1):
-                patch = full_imgs[i,:,h*stride_h:(h*stride_h)+patch_h,w*stride_w:(w*stride_w)+patch_w]
-                patches[iter_tot]=patch
-                iter_tot +=1   #total
-    assert (iter_tot==N_patches_tot)
-    return patches  #array with all the full_imgs divided in patches
-
+    return N_patches, pad_by
 
 def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     assert (len(preds.shape)==4)  #4D arrays
@@ -259,19 +240,20 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     print("N_patches_h: " +str(N_patches_h))
     print("N_patches_w: " +str(N_patches_w))
     print("N_patches_img: " +str(N_patches_img))
-    assert (preds.shape[0]%N_patches_img==0)
+
+    assert (preds.shape[0] % N_patches_img==0)
     N_full_imgs = preds.shape[0]//N_patches_img
-    print("According to the dimension inserted, there are " +str(N_full_imgs) +" full images (of " +str(img_h)+"x" +str(img_w) +" each)")
-    full_prob = np.zeros((N_full_imgs,preds.shape[1],img_h,img_w))  #itialize to zero mega array with sum of Probabilities
-    full_sum = np.zeros((N_full_imgs,preds.shape[1],img_h,img_w))
+    print("According to the dimension inserted, there are " + str(N_full_imgs) + " full images (of " + str(img_h) + "x" + str(img_w) + " each)")
+    full_prob = np.zeros((N_full_imgs, preds.shape[1], img_h, img_w))  #itialize to zero mega array with sum of Probabilities
+    full_sum  = np.zeros((N_full_imgs, preds.shape[1], img_h, img_w))
 
     k = 0 #iterator over all the patches
     for i in range(N_full_imgs):
         for h in range((img_h-patch_h)//stride_h+1):
             for w in range((img_w-patch_w)//stride_w+1):
-                full_prob[i,:,h*stride_h:(h*stride_h)+patch_h,w*stride_w:(w*stride_w)+patch_w]+=preds[k]
-                full_sum[i,:,h*stride_h:(h*stride_h)+patch_h,w*stride_w:(w*stride_w)+patch_w]+=1
-                k+=1
+                full_prob[i,:, h * stride_h: h * stride_h + patch_h, w * stride_w: w * stride_w + patch_w] += preds[k]
+                full_sum[i, :, h * stride_h: h * stride_h + patch_h, w * stride_w: w * stride_w + patch_w] += 1
+                k += 1
     assert(k==preds.shape[0])
     assert(np.min(full_sum)>=1.0)  #at least one
     final_avg = full_prob/full_sum
@@ -282,51 +264,30 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
 
 
 #Recompone the full images with the patches
-def recompone(data,N_h,N_w):
+def recompone(data, N_h, N_w):
     assert (data.shape[1]==1 or data.shape[1]==3)  #check the channel is 1 or 3
     assert(len(data.shape)==4)
-    N_pacth_per_img = N_w*N_h
-    assert(data.shape[0]%N_pacth_per_img == 0)
+    N_pacth_per_img = N_w * N_h
+    assert(data.shape[0] % N_pacth_per_img == 0)
     N_full_imgs = data.shape[0]/N_pacth_per_img
     patch_h = data.shape[2]
     patch_w = data.shape[3]
-    N_pacth_per_img = N_w*N_h
+    N_pacth_per_img = N_w * N_h
     #define and start full recompone
-    full_recomp = np.empty((N_full_imgs,data.shape[1],N_h*patch_h,N_w*patch_w))
+    full_recomp = np.empty((N_full_imgs,data.shape[1], N_h * patch_h, N_w * patch_w))
     k = 0  #iter full img
     s = 0  #iter single patch
     while (s<data.shape[0]):
         #recompone one:
-        single_recon = np.empty((data.shape[1],N_h*patch_h,N_w*patch_w))
+        single_recon = np.empty((data.shape[1], N_h * patch_h, N_w * patch_w))
         for h in range(N_h):
             for w in range(N_w):
-                single_recon[:,h*patch_h:(h*patch_h)+patch_h,w*patch_w:(w*patch_w)+patch_w]=data[s]
-                s+=1
-        full_recomp[k]=single_recon
-        k+=1
-    assert (k==N_full_imgs)
+                single_recon[:, h * patch_h: h * (patch_h + 1), w * patch_w: w * (patch_w + 1)] = data[s]
+                s += 1
+        full_recomp[k] = single_recon
+        k += 1
+    assert (k == N_full_imgs)
     return full_recomp
-
-
-#Extend the full images because patch divison is not exact
-def paint_border(data,patch_h,patch_w):
-    assert (len(data.shape)==4)  #4D arrays
-    assert (data.shape[1]==1 or data.shape[1]==3)  #check the channel is 1 or 3
-    img_h=data.shape[2]
-    img_w=data.shape[3]
-    new_img_h = 0
-    new_img_w = 0
-    if (img_h%patch_h)==0:
-        new_img_h = img_h
-    else:
-        new_img_h = ((int(img_h)/int(patch_h))+1)*patch_h
-    if (img_w%patch_w)==0:
-        new_img_w = img_w
-    else:
-        new_img_w = ((int(img_w)/int(patch_w))+1)*patch_w
-    new_data = np.zeros((data.shape[0],data.shape[1],new_img_h,new_img_w))
-    new_data[:,:,0:img_h,0:img_w] = data[:,:,:,:]
-    return new_data
 
 
 #return only the pixels contained in the FOV, for both images and masks

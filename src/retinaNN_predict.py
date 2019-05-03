@@ -27,7 +27,6 @@ from help_functions import *
 # extract_patches.py
 from extract_patches import recompone
 from extract_patches import recompone_overlap
-from extract_patches import paint_border
 from extract_patches import kill_border
 from extract_patches import pred_only_FOV
 from extract_patches import get_data_testing
