@@ -4,14 +4,15 @@
 #
 #============================================================
 
-import os
+import os, errno
 import h5py
 import numpy as np
 from PIL import Image
 import configparser
 import sys
 sys.path.insert(0, './lib/')
-from extract_patches import get_data_training, get_data_testing, get_data_testing_overlap
+from extract_patches import extract_ordered_overlap
+from pre_processing import my_PreProc
 
 
 #config file to read from
@@ -24,10 +25,12 @@ width = 565
 batch_size = int(config.get('global', 'hdf5_batch_size'))
 patch_h = int(config.get('data attributes', 'patch_height'))
 patch_w = int(config.get('data attributes', 'patch_width'))
+patch_size = (patch_h, patch_w)
 
 average_mode = config.get('global', 'average_mode')
 stride_h = int(config.get('global', 'stride_height'))
 stride_w = int(config.get('global', 'stride_width'))
+stride_size = (stride_h, stride_w)
 
 N_patches_per_img = ((height + stride_h - (height - patch_h) % stride_h - patch_h)//stride_h + 1)*((width + stride_w - (width - patch_w) % stride_w - patch_w)//stride_w + 1)
 
@@ -35,12 +38,15 @@ def write_hdf5(arr,outfile):
     with h5py.File(outfile,"w") as f:
         f.create_dataset("image", data=arr, dtype=arr.dtype)
 
-def write_virtual_layout(layout, output):
-    with h5py.File(output, 'w', libver='latest') as f:
-        f.create_virtual_dataset('image', layout, fillvalue=-5)
+def mkdirs(newdir):
+    try: os.makedirs(newdir)
+    except OSError as err:
+        # Reraise the error unless it's about an already existing directory 
+        if err.errno != errno.EEXIST or not os.path.isdir(newdir): 
+            raise
 
 def get_filename(dataset_path, suffix, train_test, fileCounter):
-    return dataset_path + "dataset_" + suffix + "_" + train_test + str(fileCounter) + ".hdf5"
+    return dataset_path + train_test + "/" + suffix + "/" + str(fileCounter) + ".png"
 
 def get_datasets(
     dataset_path,
@@ -51,103 +57,43 @@ def get_datasets(
     N_subimgs,
     train_test="null"
 ):
-    channels = 3
-    total_imgs = Nimgs
-    patches = total_imgs * N_subimgs
-    if train_test == 'test':
-        patches = total_imgs * N_patches_per_img
-
-    if Nimgs > batch_size:
-        Nimgs = batch_size
-
-    shape_imgs = (Nimgs,height,width, channels)
-    imgs = np.empty(shape_imgs, dtype=np.uint8)
-    layout_imgs = h5py.VirtualLayout(shape=(patches, 1, patch_h, patch_w), dtype=np.uint8)
-    shape_gts = (Nimgs, height, width)
-    g_truths = np.empty(shape_gts, dtype=np.uint8)
-    layout_gts = h5py.VirtualLayout(shape=(patches, 1, patch_h, patch_w), dtype=np.uint8)
-
     fileCounter = 0
-    readFile = False
+
+    mkdirs(dataset_path + train_test + "/imgs")
+    mkdirs(dataset_path + train_test + "/groundtruths")
 
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
         for i in range(len(files)):
             #original
-            img = Image.open(imgs_dir+files[i])
-            g_truth = Image.open(groundTruth_dir + files[i]).convert('L')
-            imgs[i % batch_size] = np.asarray(img)
-            g_truths[i % batch_size] = np.asarray(g_truth)
-            readFile = True
+            img = np.asarray(Image.open(imgs_dir + files[i]).convert('L'))
+            g_truth = np.asarray(Image.open(groundTruth_dir + files[i]).convert('L'))
+            img = np.reshape(img, (1, 1, img.shape[0], img.shape[1]))
+            g_truth = np.reshape(g_truth, (1, 1, g_truth.shape[0], g_truth.shape[1]))
 
-            if i % 100 == 0:
-                print('reading img ' + str(i))
+            if i % 100 == 99:
+                print('processing img ' + str(i + 1))
             
-            if i % batch_size == (batch_size - 1):
-                # test imgs
-                imgs = np.transpose(imgs,(0,3,1,2))
-                assert(imgs.shape == (Nimgs,channels,height,width))
+            # test imgs
+            assert(img.shape == (1, 1, height, width))
+            # test g_truths
+            assert(np.max(g_truth)==255)
+            assert(np.min(g_truth)==0)
+            assert(g_truth.shape == (1, 1, height, width))
 
-                # test g_truths
-                assert(np.max(g_truths)==255)
-                assert(np.min(g_truths)==0)
-                g_truths = np.reshape(g_truths,(Nimgs,1,height,width))
-                assert(g_truths.shape == (Nimgs,1,height,width))
-
-                # extract patches
-                img_data, gt_data = get_data(imgs, g_truths, N_subimgs, train_test)
-                img_data = np.array((img_data * 255), dtype=np.uint8)
-                gt_data = np.array((gt_data * 255), dtype=np.uint8)
-                
+            # extract patches
+            img = my_PreProc(img)
+            img_data = extract_ordered_overlap(img, patch_size, stride_size)
+            # preprocess img
+            gt_data  = extract_ordered_overlap(g_truth, patch_size, stride_size)
+            
+            for i in range(img_data.shape[0]):
                 filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
                 print("writing " + filename_imgs)
-                write_hdf5(img_data, filename_imgs)
-                vsource_imgs = h5py.VirtualSource(filename_imgs, 'image', shape=img_data.shape)
-                layout_imgs[fileCounter * img_data.shape[0]: (fileCounter + 1) * img_data.shape[0]] = vsource_imgs
-                
-                filename_gts = get_filename(dataset_path, 'groundTruths', train_test, fileCounter)
+                Image.fromarray(img_data[i, 0], mode = 'L').save(filename_imgs)
+                filename_gts = get_filename(dataset_path, 'groundtruths', train_test, fileCounter)
                 print("writing " + filename_gts)
-                write_hdf5(gt_data, filename_gts)
-                vsource_gts = h5py.VirtualSource(filename_gts, 'image', shape=gt_data.shape)
-                layout_gts[fileCounter * gt_data.shape[0]: (fileCounter + 1) * gt_data.shape[0]] = vsource_gts
-
+                Image.fromarray(gt_data[i, 0], mode = 'L').save(filename_gts)
                 fileCounter += 1
-                readFile = False
-                imgs = np.empty(shape_imgs, dtype=np.uint8)
-                g_truths = np.empty(shape_gts, dtype=np.uint8)
-
-    if readFile:
-        # test imgs
-        imgs = np.transpose(imgs[:total_imgs % batch_size], (0,3,1,2))
-        assert(imgs.shape == (total_imgs % batch_size,channels,height,width))
-
-        # test g_truths
-        assert(np.max(g_truths)==255)
-        assert(np.min(g_truths)==0)
-        g_truths = np.reshape(g_truths[:total_imgs % batch_size], (total_imgs % batch_size,1,height,width))
-        assert(g_truths.shape == (total_imgs % batch_size,1,height,width))
-
-        # extract patches
-        img_data, gt_data = get_data(imgs, g_truths, N_subimgs, train_test)
-        img_data = np.array((img_data * 255), dtype=np.uint8)
-        gt_data = np.array((gt_data * 255), dtype=np.uint8)
-
-        filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
-        print("writing " + filename_imgs)
-        write_hdf5(img_data, filename_imgs)
-        vsource_imgs = h5py.VirtualSource(filename_imgs, 'image', shape=img_data.shape)
-        layout_imgs[fileCounter * img_data.shape[0]:] = vsource_imgs
-        
-        filename_gts = get_filename(dataset_path, 'groundTruths', train_test, fileCounter)
-        print("writing " + filename_gts)
-        write_hdf5(gt_data, filename_gts)
-        vsource_gts = h5py.VirtualSource(filename_gts, 'image', shape=gt_data.shape)
-        layout_gts[fileCounter * gt_data.shape[0]:] = vsource_gts
-
-    # write layout
-    print(layout_gts.shape)
-    print(layout_imgs.shape)
-    write_virtual_layout(layout_imgs, dataset_path + "dataset_imgs_" + train_test + ".hdf5")
-    write_virtual_layout(layout_gts, dataset_path + "dataset_groundTruths_" + train_test + ".hdf5")
 
 def prepare_dataset(configuration):
 

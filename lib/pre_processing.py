@@ -15,14 +15,10 @@ from help_functions import *
 #My pre processing (use for both training and testing!)
 def my_PreProc(data):
     assert(len(data.shape)==4)
-    assert (data.shape[1]==3)  #Use the original images
-    #black-white conversion
-    train_imgs = rgb2gray(data)
-    #my preprocessing:
-    train_imgs = dataset_normalized(train_imgs)
-    train_imgs = clahe_equalized(train_imgs)
-    train_imgs = adjust_gamma(train_imgs, 1.2)
-    train_imgs = train_imgs/255.  #reduce to 0-1 range
+    assert (data.shape[1]==1)
+    # train_imgs = dataset_normalized(train_imgs) # is done by keras before training
+    train_imgs = clahe_equalized(data)
+    train_imgs = adjust_gamma(data, 1.2)
     return train_imgs
 
 
