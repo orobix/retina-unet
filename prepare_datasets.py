@@ -10,6 +10,8 @@ import numpy as np
 from PIL import Image
 import configparser
 import sys
+import tensorflow as tf
+import cv2
 sys.path.insert(0, './lib/')
 from extract_patches import extract_ordered_overlap
 from pre_processing import my_PreProc
@@ -44,11 +46,14 @@ def mkdirs(newdir):
         if err.errno != errno.EEXIST or not os.path.isdir(newdir): 
             raise
 
-def get_filename(dataset_path, suffix, train_test, fileCounter):
+def get_filename_img(dataset_path, suffix, train_test, fileCounter):
     return dataset_path + train_test + "/" + suffix + "/" + str(fileCounter) + ".png"
 
-def save_samples(img_patches, gt_patches):
+def get_filename_tfrecord(dataset_path, suffix, train_test, fileCounter):
+    return dataset_path + "dataset_" + suffix + "_" + train_test + str(fileCounter) + ".tfrecord"
 
+def _bytes_feature(value):
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 def get_datasets(
     dataset_path,
@@ -61,8 +66,9 @@ def get_datasets(
 ):
     fileCounter = 0
 
-    mkdirs(dataset_path + train_test + "/imgs")
-    mkdirs(dataset_path + train_test + "/groundtruths")
+    # mkdirs(dataset_path + train_test + "/imgs")
+    # mkdirs(dataset_path + train_test + "/groundtruths")
+    writer = tf.python_io.TFRecordWriter(get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
 
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
         for i in range(len(files)):
@@ -72,8 +78,7 @@ def get_datasets(
             img = np.reshape(img, (1, 1, img.shape[0], img.shape[1]))
             g_truth = np.reshape(g_truth, (1, 1, g_truth.shape[0], g_truth.shape[1]))
 
-            if i % 100 == 99:
-                print('processing img ' + str(i + 1))
+            print('processing img ' + str(i + 1))
             
             # test imgs
             assert(img.shape == (1, 1, height, width))
@@ -85,19 +90,30 @@ def get_datasets(
             # extract patches
             img = my_PreProc(img)
             img_data = extract_ordered_overlap(img, patch_size, stride_size)
+            img_data = np.transpose(img_data, (0, 2, 3, 1)).astype(np.uint8)
             # preprocess img
-            gt_data  = extract_ordered_overlap(g_truth, patch_size, stride_size)
-            
+            gt_data = extract_ordered_overlap(g_truth, patch_size, stride_size)
+            gt_data = np.transpose(gt_data, (0, 2, 3, 1)).astype(np.uint8)
 
-            for i in range(img_data.shape[0]):
-            encoded_image_string = cv2.imencode(‘.jpg’, image)[1].tostring()
-                filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
-                # print("writing " + filename_imgs)
-                Image.fromarray(img_data[i, 0].astype(np.uint8), 'L').save(filename_imgs)
-                filename_gts = get_filename(dataset_path, 'groundtruths', train_test, fileCounter)
-                # print("writing " + filename_gts)
-                Image.fromarray(gt_data[i, 0].astype(np.uint8), 'L').save(filename_gts)
+            for j in range(img_data.shape[0]):
+                encoded_img_string = cv2.imencode('.png', img_data[j])[1].tostring()
+                encoded_gt_string = cv2.imencode('.png', gt_data[j])[1].tostring()
+                feature = {
+                    'image': _bytes_feature(tf.compat.as_bytes(encoded_img_string)),
+                    'label': _bytes_feature(tf.compat.as_bytes(encoded_gt_string)),
+                }
+                tf_example = tf.train.Example(
+                    features = tf.train.Features(feature=feature)
+                )
+                writer.write(tf_example.SerializeToString())
+            
+            # create each 20 images a new tfrecord (ca 500mb)
+            if i % 20 == 19:
+                writer.close()
                 fileCounter += 1
+                print('create new writer: ' + get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
+                writer = tf.python_io.TFRecordWriter(get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
+    writer.close()
 
 def prepare_dataset(configuration):
 
