@@ -82,6 +82,7 @@ def get_datasets(
 
             # extract patches
             img = my_PreProc(img)
+            Image.fromarray(img[0,0].astype(np.uint8), 'L').show()
             img_data = extract_ordered_overlap(img, patch_size, stride_size)
             # preprocess img
             gt_data  = extract_ordered_overlap(g_truth, patch_size, stride_size)
@@ -89,10 +90,10 @@ def get_datasets(
             for i in range(img_data.shape[0]):
                 filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
                 print("writing " + filename_imgs)
-                Image.fromarray(img_data[i, 0], mode = 'L').save(filename_imgs)
+                Image.fromarray(img_data[i, 0].astype(np.uint8), 'L').save(filename_imgs)
                 filename_gts = get_filename(dataset_path, 'groundtruths', train_test, fileCounter)
                 print("writing " + filename_gts)
-                Image.fromarray(gt_data[i, 0], mode = 'L').save(filename_gts)
+                Image.fromarray(gt_data[i, 0].astype(np.uint8), 'L').save(filename_gts)
                 fileCounter += 1
 
 def prepare_dataset(configuration):
