@@ -82,7 +82,6 @@ def get_datasets(
 
             # extract patches
             img = my_PreProc(img)
-            Image.fromarray(img[0,0].astype(np.uint8), 'L').show()
             img_data = extract_ordered_overlap(img, patch_size, stride_size)
             # preprocess img
             gt_data  = extract_ordered_overlap(g_truth, patch_size, stride_size)
