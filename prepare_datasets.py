@@ -88,10 +88,10 @@ def get_datasets(
             
             for i in range(img_data.shape[0]):
                 filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
-                print("writing " + filename_imgs)
+                # print("writing " + filename_imgs)
                 Image.fromarray(img_data[i, 0].astype(np.uint8), 'L').save(filename_imgs)
                 filename_gts = get_filename(dataset_path, 'groundtruths', train_test, fileCounter)
-                print("writing " + filename_gts)
+                # print("writing " + filename_gts)
                 Image.fromarray(gt_data[i, 0].astype(np.uint8), 'L').save(filename_gts)
                 fileCounter += 1
 
