@@ -22,7 +22,6 @@ config.read('./global_config.txt')
 height = 565
 width = 565
 
-batch_size = int(config.get('global', 'hdf5_batch_size'))
 patch_h = int(config.get('data attributes', 'patch_height'))
 patch_w = int(config.get('data attributes', 'patch_width'))
 patch_size = (patch_h, patch_w)
@@ -47,6 +46,9 @@ def mkdirs(newdir):
 
 def get_filename(dataset_path, suffix, train_test, fileCounter):
     return dataset_path + train_test + "/" + suffix + "/" + str(fileCounter) + ".png"
+
+def save_samples(img_patches, gt_patches):
+
 
 def get_datasets(
     dataset_path,
@@ -86,7 +88,9 @@ def get_datasets(
             # preprocess img
             gt_data  = extract_ordered_overlap(g_truth, patch_size, stride_size)
             
+
             for i in range(img_data.shape[0]):
+            encoded_image_string = cv2.imencode(‘.jpg’, image)[1].tostring()
                 filename_imgs = get_filename(dataset_path, 'imgs', train_test, fileCounter)
                 # print("writing " + filename_imgs)
                 Image.fromarray(img_data[i, 0].astype(np.uint8), 'L').save(filename_imgs)
@@ -161,8 +165,8 @@ def get_data(imgs, gts, subimgs, test_train):
     return img_patches, gt_patches
 
 print("")
-print('batch_size: ' + str(batch_size))
+print("processing DRIVE dataset")
 prepare_dataset(config['DRIVE'])
 print("")
-print('batch_size: ' + str(batch_size))
+print("processing Synth dataset")
 prepare_dataset(config['Synth'])

@@ -30,7 +30,6 @@ N_imgs_test = 1000
 N_imgs_train = 9000
 
 [global]
-hdf5_batch_size = 500
 average_mode = True
 stride_height = 5
 stride_width = 5
