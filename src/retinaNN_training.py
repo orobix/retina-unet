@@ -29,7 +29,7 @@ from help_functions import *
 #Define the neural network
 def get_unet(tensor, label, n_ch, patch_height, patch_width):
     inputs = Input(batch_shape=(32, n_ch, patch_height, patch_width))
-    conv1 = Conv2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first')(inputs)
+    conv1 = Conv2D(32, (3, 3), activation='relu', padding='same',data_format='channels_first')(inputs)
     conv1 = Dropout(0.2)(conv1)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same',data_format='channels_first')(conv1)
     pool1 = MaxPooling2D((2, 2))(conv1)
@@ -149,12 +149,13 @@ checkpointer = ModelCheckpoint(
     mode='auto', 
     save_best_only=True) #save at each epoch if the validation decreased
 
-dataset = load_dataset(path_data + train_path, patch_size, batch_size, N_subimgs)
+test_dataset, train_dataset = load_dataset(path_data + train_path, patch_size, batch_size, N_subimgs)
 
-model.fit( dataset,
+model.fit( train_dataset,
     epochs = N_epochs,
     steps_per_epoch = int(N_subimgs / batch_size),
     batch_size = batch_size,
+    validation_data = test_dataset,
     callbacks=[checkpointer])
 
 #========== Save and test the last model ===================

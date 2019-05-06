@@ -54,16 +54,21 @@ def load_dataset(filepath, patch_size, batch_size, N_imgs, shuffle=True):
     # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
     dataset = dataset.map(_parse_function, num_parallel_calls=8)
     dataset = dataset.map(normalize, num_parallel_calls=8)
-    
-    # Set the batchsize
-    dataset = dataset.batch(batch_size, drop_remainder=True)
 
-    # This dataset will go on forever
-    return dataset.repeat()
+    #split in testing and training
+    test_data = dataset.take(int(N_imgs / 10)) \
+        .batch(batch_size, drop_remainder=True) \
+        .repeat()
+    train_data = dataset.skip(int(N_imgs / 10)) \
+        .batch(batch_size, drop_remainder=True) \
+        .repeat()
+    return test_data, train_data
 
 def load_tfrecord(filepath, patch_size, batch_size, N_imgs, shuffle=True):    
+    test_data, train_data = load_dataset(filepath, patch_size, batch_size, N_imgs, shuffle)
+    
     # Create an iterator
-    iterator = load_dataset(filepath, patch_size, batch_size, N_imgs, shuffle).make_one_shot_iterator()
+    iterator = train_data.make_one_shot_iterator()
     
     # Create your tf representation of the iterator
     image, label = iterator.get_next()
