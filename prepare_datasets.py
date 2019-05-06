@@ -61,13 +61,9 @@ def get_datasets(
     imgs_dir,
     groundTruth_dir,
     borderMasks_dir,
-    N_subimgs,
     train_test="null"
 ):
     fileCounter = 0
-
-    # mkdirs(dataset_path + train_test + "/imgs")
-    # mkdirs(dataset_path + train_test + "/groundtruths")
     writer = tf.python_io.TFRecordWriter(get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
 
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
@@ -129,7 +125,6 @@ def prepare_dataset(configuration):
         configuration['original_imgs_test'],
         configuration['groundTruth_imgs_test'],
         configuration['borderMasks_imgs_test'],
-        int(configuration['N_subimgs']),
         "test"
     )
     print ("test data done!")
@@ -141,7 +136,6 @@ def prepare_dataset(configuration):
         configuration['original_imgs_train'],
         configuration['groundTruth_imgs_train'],
         configuration['borderMasks_imgs_train'],
-        int(configuration['N_subimgs']),
         "train"
     )
     print("train data done!")

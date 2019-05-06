@@ -1,7 +1,15 @@
 import h5py
 import numpy as np
+import glob
 from PIL import Image
 from matplotlib import pyplot as plt
+import tensorflow as tf
+from tensorflow.io import decode_png
+import keras
+
+
+MEAN = 0
+STD = 1
 
 def load_hdf5(infile):
   with h5py.File(infile,"r") as f:  #"with" close the file after its nested commands
@@ -10,6 +18,11 @@ def load_hdf5(infile):
 def write_hdf5(arr,outfile):
   with h5py.File(outfile,"w") as f:
     f.create_dataset("image", data=arr, dtype=arr.dtype)
+
+def normalize(image, label):
+    # image = (image - MEAN) / STD
+    image = tf.cast(image, tf.float32) / 85. - 3.     # 255 / 3 for range -3 to 3
+    return image, label
 
 def _parse_function(proto):
     # define your tfrecord again. Remember that you saved your image as a string.
@@ -20,26 +33,27 @@ def _parse_function(proto):
     parsed_features = tf.parse_single_example(proto, keys_to_features)
     
     # Turn your saved image string into an array
-    parsed_features['image'] = tf.decode_raw(parsed_features['image'], tf.uint8)
-    parsed_features['label'] = tf.decode_raw(parsed_features['label'], tf.uint8)
+    parsed_features['image'] = decode_png(parsed_features['image'])
+    parsed_features['label'] = decode_png(parsed_features['label'])
     
     return parsed_features['image'], parsed_features["label"]
 
-def load_tfrecord(filepath, patch_size):
+def load_tfrecord(filepath, patch_size, batch_size, N_imgs):
     # This works with arrays as well
-    dataset = tf.data.TFRecordDataset(filepath)
-    
-    # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
-    dataset = dataset.map(_parse_function, num_parallel_calls=8)
+    dataset = tf.data.TFRecordDataset(glob.glob(filepath))
     
     # This dataset will go on forever
     dataset = dataset.repeat()
     
     # Set the number of datapoints you want to load and shuffle 
-    dataset = dataset.shuffle(SHUFFLE_BUFFER)
+    dataset = dataset.shuffle(N_imgs)
+
+    # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
+    dataset = dataset.map(_parse_function, num_parallel_calls=8)
+    dataset = dataset.map(normalize, num_parallel_calls=8)
     
     # Set the batchsize
-    dataset = dataset.batch(BATCH_SIZE)
+    dataset = dataset.batch(batch_size)
     
     # Create an iterator
     iterator = dataset.make_one_shot_iterator()
@@ -48,14 +62,14 @@ def load_tfrecord(filepath, patch_size):
     image, label = iterator.get_next()
 
     # Bring your picture back in shape
-    image = tf.reshape(image, [-1, patch_size[0], patch_size[1], 1])
-    label = tf.reshape(label, [-1, patch_size[0], patch_size[1], 1])
+    image = tf.reshape(image, [-1, 1, patch_size[0], patch_size[1]])
+    label = tf.reshape(label, [-1, 1, patch_size[0], patch_size[1]])
 
     return image, label
 
 #group a set of images row per columns
-def group_images(data,per_row):
-    assert data.shape[0]%per_row==0
+def group_images(data, per_row):
+    assert data.shape[0] % per_row==0
     assert (data.shape[1]==1 or data.shape[1]==3)
     data = np.transpose(data,(0,2,3,1))  #corect format for imshow
     all_stripe = []

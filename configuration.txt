@@ -1,25 +1,22 @@
 [data paths]
 path_local = ./
-train_imgs_original = Synth_datasets/dataset_imgs_train.hdf5
-train_groundtruth = Synth_datasets/dataset_groundTruth_train.hdf5
-train_border_masks = Synth_datasets/dataset_borderMasks_train.hdf5
-test_imgs_original = Synth_datasets/dataset_imgs_test.hdf5
-test_groundtruth = Synth_datasets/dataset_groundTruth_test.hdf5
-test_border_masks = Synth_datasets/dataset_borderMasks_test.hdf5
+train_data_path = DRIVE_datasets/dataset__train*.tfrecord
+test_data_path = DRIVE_datasets/dataset__test*.tfrecord
 
 [experiment name]
-name = Synth_Synth_experiment
+name = DRIVE_DRIVE_experiment
 
 [data attributes]
 patch_height = 48
 patch_width = 48
+img_height = 568
+img_width = 568
 
 [training settings]
-inside_fov = False
 n_epochs = 150
 batch_size = 32
 nohup = False
-n_subimgs = 190000
+n_subimgs = 216320
 
 [testing settings]
 best_last = best
@@ -28,5 +25,5 @@ average_mode = True
 stride_height = 5
 stride_width = 5
 nohup = False
-full_images_to_test = 1000
+full_images_to_test = 216320
 

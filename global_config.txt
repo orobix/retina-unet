@@ -9,8 +9,6 @@ original_imgs_test = ./DRIVE/test/images/
 groundTruth_imgs_test = ./DRIVE/test/1st_manual/
 borderMasks_imgs_test = ./DRIVE/test/mask/
 path = ./DRIVE_datasets/
-# per image
-N_subimgs = 9500
 N_imgs_test = 20
 N_imgs_train = 20
 
@@ -24,8 +22,6 @@ original_imgs_test = ./Synth/test/images/
 groundTruth_imgs_test = ./Synth/test/groundtruths/
 borderMasks_imgs_test = ./DRIVE/test/mask/
 path = ./Synth_datasets/
-# per image
-N_subimgs = 9500
 N_imgs_test = 1000
 N_imgs_train = 9000
 
