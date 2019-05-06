@@ -32,6 +32,6 @@ for setup in settings:
     config.write(f)
 
   ### run experiment
-  os.system('python3 run_training.py')
+  os.system('python run_training.py')
   # os.system('python run_testing.py')
   break
