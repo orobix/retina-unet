@@ -7,8 +7,7 @@ import tensorflow as tf
 from tensorflow.io import decode_png
 
 
-MEAN = 0
-STD = 1
+PATCH_SIZE = (48, 48)
 
 def load_hdf5(infile):
   with h5py.File(infile,"r") as f:  #"with" close the file after its nested commands
@@ -33,12 +32,18 @@ def _parse_function(proto):
     parsed_features = tf.parse_single_example(proto, keys_to_features)
     
     # Turn your saved image string into an array
-    parsed_features['image'] = decode_png(parsed_features['image'])
-    parsed_features['label'] = decode_png(parsed_features['label'])
-    
-    return parsed_features['image'], parsed_features["label"]
+    image = decode_png(parsed_features['image'])
+    label = decode_png(parsed_features['label'])
 
-def load_tfrecord(filepath, patch_size, batch_size, N_imgs, shuffle=True):
+
+    # Bring your picture back in shape
+    image = tf.reshape(image, [1, PATCH_SIZE[0], PATCH_SIZE[1]])
+    label = tf.reshape(label, [1, PATCH_SIZE[0], PATCH_SIZE[1]])
+    
+    return image, label
+
+def load_dataset(filepath, patch_size, batch_size, N_imgs, shuffle=True):
+    PATCH_SIZE = patch_size
     # This works with arrays as well
     dataset = tf.data.TFRecordDataset(glob.glob(filepath))
     
@@ -54,17 +59,14 @@ def load_tfrecord(filepath, patch_size, batch_size, N_imgs, shuffle=True):
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
     # This dataset will go on forever
-    dataset = dataset.repeat()
-    
+    return dataset.repeat()
+
+def load_tfrecord(filepath, patch_size, batch_size, N_imgs, shuffle=True):    
     # Create an iterator
-    iterator = dataset.make_one_shot_iterator()
+    iterator = load_dataset(filepath, patch_size, batch_size, N_imgs, shuffle).make_one_shot_iterator()
     
     # Create your tf representation of the iterator
     image, label = iterator.get_next()
-
-    # Bring your picture back in shape
-    image = tf.reshape(image, [-1, 1, patch_size[0], patch_size[1]])
-    label = tf.reshape(label, [-1, 1, patch_size[0], patch_size[1]])
 
     return image, label
 

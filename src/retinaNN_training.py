@@ -141,8 +141,6 @@ plot(model, to_file='./'+name_experiment+'/'+name_experiment + '_model.png')   #
 json_string = model.to_json()
 open('./'+name_experiment+'/'+name_experiment +'_architecture.json', 'w').write(json_string)
 
-
-
 #============  Training ==================================
 checkpointer = ModelCheckpoint(
     filepath='./'+name_experiment+'/'+name_experiment +'_best_weights.h5',
@@ -151,8 +149,9 @@ checkpointer = ModelCheckpoint(
     mode='auto', 
     save_best_only=True) #save at each epoch if the validation decreased
 
-model.fit(
-    patches_imgs_train, patches_gts_train,
+dataset = load_dataset(path_data + train_path, patch_size, batch_size, N_subimgs)
+
+model.fit( dataset,
     epochs = N_epochs,
     steps_per_epoch = int(N_subimgs / batch_size),
     batch_size = batch_size,
