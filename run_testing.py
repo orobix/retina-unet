@@ -32,9 +32,9 @@ else:
 # finally run the prediction
 if nohup:
     print("\n2. Run the prediction on GPU  with nohup")
-    os.system(run_GPU +' nohup python -u ./src/retinaNN_predict.py > ' +'./'+name_experiment+'/'+name_experiment+'_prediction.nohup')
+    os.system(run_GPU +' nohup python3 -u ./src/retinaNN_predict.py > ' +'./'+name_experiment+'/'+name_experiment+'_prediction.nohup')
 else:
     print("\n2. Run the prediction on GPU (no nohup)")
-    os.system(run_GPU +' python ./src/retinaNN_predict.py')
+    os.system(run_GPU +' python3 ./src/retinaNN_predict.py')
 
 print("Done!")

@@ -13,6 +13,7 @@ from matplotlib import pyplot as plt
 #Keras
 from keras.models import model_from_json
 from keras.models import Model
+import tensorflow as tf
 #scikit learn
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
@@ -45,11 +46,9 @@ path_data = config.get('data paths', 'path_local')
 full_img_height = config.get('data attributes', 'img_height')
 full_img_width = config.get('data attributes', 'img_width')
 # dimension of the patches
-patch_height = int(config.get('data attributes', 'patch_height'))
-patch_width = int(config.get('data attributes', 'patch_width'))
+patch_size = (int(config.get('data attributes', 'patch_height')), int(config.get('data attributes', 'patch_width')))
 #the stride in case output with average
-stride_height = int(config.get('testing settings', 'stride_height'))
-stride_width = int(config.get('testing settings', 'stride_width'))
+stride_size = (int(config.get('testing settings', 'stride_height')), int(config.get('testing settings', 'stride_width')))
 assert (stride_height < patch_height and stride_width < patch_width)
 #model name
 name_experiment = config.get('experiment name', 'name')
@@ -63,10 +62,8 @@ average_mode = config.getboolean('testing settings', 'average_mode')
 
 
 
-#============ Load the data
-patches_imgs_test, masks_test = load_hdf5(config.get('data paths', 'test_imgs_original')), load_hdf5(config.get('data paths', 'test_groundTruth'))
-
-
+#============ Load the data ===================
+patches_imgs_test, masks_test = load_tfrecord(filepath, patch_size, 32, Imgs_to_test, False)
 
 #================ Run the prediction of the patches ==================================
 best_last = config.get('testing settings', 'best_last')
@@ -78,9 +75,88 @@ predictions = model.predict(patches_imgs_test, batch_size=32, verbose=2)
 print("predicted images size :")
 print(predictions.shape)
 
-#===== Convert the prediction arrays in corresponding images
-pred_patches = pred_to_imgs(predictions, patch_height, patch_width, "original")
+#====== Evaluate the results =======================
+print("\n\n========  Evaluate the results =======================")
 
+#Area under the ROC curve
+auc, update_op = tf.metrics.auc(masks_test, predictions)
+print("\nArea under the ROC curve: " +str(auc))
+roc_curve=plt.figure()
+plt.plot(fpr,tpr,'-',label='Area Under the Curve (AUC = %0.4f)' % auc )
+plt.title('ROC curve')
+plt.xlabel("FPR (False Positive Rate)")
+plt.ylabel("TPR (True Positive Rate)")
+plt.legend(loc="lower right")
+plt.savefig(path_experiment+"ROC.png")
+
+#Precision-recall curve
+precision, recall, thresholds = precision_recall_curve(y_true.astype(int), y_scores)
+precision = np.fliplr([precision])[0]  #so the array is increasing (you won't get negative AUC)
+recall = np.fliplr([recall])[0]  #so the array is increasing (you won't get negative AUC)
+AUC_prec_rec = np.trapz(precision,recall)
+print("\nArea under Precision-Recall curve: " +str(AUC_prec_rec))
+prec_rec_curve = plt.figure()
+plt.plot(recall,precision,'-',label='Area Under the Curve (AUC = %0.4f)' % AUC_prec_rec)
+plt.title('Precision - Recall curve')
+plt.xlabel("Recall")
+plt.ylabel("Precision")
+plt.legend(loc="lower right")
+plt.savefig(path_experiment+"Precision_recall.png")
+
+#Confusion matrix
+threshold_confusion = 0.5
+print("\nConfusion matrix:  Custom threshold (for positive) of " +str(threshold_confusion))
+y_pred = np.empty((y_scores.shape[0]))
+for i in range(y_scores.shape[0]):
+    if y_scores[i]>=threshold_confusion:
+        y_pred[i]=1
+    else:
+        y_pred[i]=0
+confusion = confusion_matrix(y_true.astype(int), y_pred)
+print(confusion)
+accuracy = 0
+if float(np.sum(confusion))!=0:
+    accuracy = float(confusion[0,0]+confusion[1,1])/float(np.sum(confusion))
+print("Global Accuracy: " +str(accuracy))
+specificity = 0
+if float(confusion[0,0]+confusion[0,1])!=0:
+    specificity = float(confusion[0,0])/float(confusion[0,0]+confusion[0,1])
+print("Specificity: " +str(specificity))
+sensitivity = 0
+if float(confusion[1,1]+confusion[1,0])!=0:
+    sensitivity = float(confusion[1,1])/float(confusion[1,1]+confusion[1,0])
+print("Sensitivity: " +str(sensitivity))
+precision = 0
+if float(confusion[1,1]+confusion[0,1])!=0:
+    precision = float(confusion[1,1])/float(confusion[1,1]+confusion[0,1])
+print("Precision: " +str(precision))
+
+#Jaccard similarity index
+jaccard_index = jaccard_similarity_score(y_true.astype(int), y_pred, normalize=True)
+print("\nJaccard similarity score: " +str(jaccard_index))
+
+#F1 score
+F1_score = f1_score(y_true.astype(int), y_pred, labels=None, average='binary', sample_weight=None)
+print("\nF1 score (F-measure): " +str(F1_score))
+
+#Save the results
+file_perf = open(path_experiment+'performances.txt', 'w')
+file_perf.write("Area under the ROC curve: "+str(AUC_ROC)
+                + "\nArea under Precision-Recall curve: " +str(AUC_prec_rec)
+                + "\nJaccard similarity score: " +str(jaccard_index)
+                + "\nF1 score (F-measure): " +str(F1_score)
+                +"\n\nConfusion matrix:"
+                +str(confusion)
+                +"\nACCURACY: " +str(accuracy)
+                +"\nSENSITIVITY: " +str(sensitivity)
+                +"\nSPECIFICITY: " +str(specificity)
+                +"\nPRECISION: " +str(precision)
+                )
+file_perf.close()
+
+#===== Convert the prediction arrays in corresponding images
+# TODO!!!!
+pred_patches = pred_to_imgs(predictions, patch_height, patch_width, "threshold")
 
 
 #========== Elaborate and visualize the predicted images ====================
@@ -120,89 +196,3 @@ for i in range(int(N_predicted/group)):
     pred_stripe = group_images(pred_imgs[i*group:(i*group)+group,:,:,:],group)
     total_img = np.concatenate((orig_stripe,masks_stripe,pred_stripe),axis=0)
     visualize(total_img,path_experiment+name_experiment +"_Original_GroundTruth_Prediction"+str(i))#.show()
-
-
-#====== Evaluate the results
-print("\n\n========  Evaluate the results =======================")
-# #predictions only inside the FOV
-# y_scores, y_true = pred_only_FOV(pred_imgs,gtruth_masks, test_border_masks)  #returns data only inside the FOV
-# print("Calculating results only inside the FOV:")
-# print("y scores pixels: " +str(y_scores.shape[0]) +" (radius 270: 270*270*3.14==228906), including background around retina: " +str(pred_imgs.shape[0]*pred_imgs.shape[2]*pred_imgs.shape[3]) +" (584*565==329960)")
-# print("y true pixels: " +str(y_true.shape[0]) +" (radius 270: 270*270*3.14==228906), including background around retina: " +str(gtruth_masks.shape[2]*gtruth_masks.shape[3]*gtruth_masks.shape[0])+" (584*565==329960)")
-
-#Area under the ROC curve
-fpr, tpr, thresholds = roc_curve(y_true.astype(int), y_scores)  #round() or int()?
-AUC_ROC = roc_auc_score(y_true.astype(int), y_scores)
-print("\nArea under the ROC curve: " +str(AUC_ROC))
-roc_curve=plt.figure()
-# plt.plot(fpr,tpr,'-',label='Area Under the Curve (AUC = %0.4f)' % AUC_ROC)
-# plt.title('ROC curve')
-# plt.xlabel("FPR (False Positive Rate)")
-# plt.ylabel("TPR (True Positive Rate)")
-# plt.legend(loc="lower right")
-# plt.savefig(path_experiment+"ROC.png")
-
-# #Precision-recall curve
-# precision, recall, thresholds = precision_recall_curve(y_true.astype(int), y_scores)
-# precision = np.fliplr([precision])[0]  #so the array is increasing (you won't get negative AUC)
-# recall = np.fliplr([recall])[0]  #so the array is increasing (you won't get negative AUC)
-# AUC_prec_rec = np.trapz(precision,recall)
-# print("\nArea under Precision-Recall curve: " +str(AUC_prec_rec))
-# prec_rec_curve = plt.figure()
-# plt.plot(recall,precision,'-',label='Area Under the Curve (AUC = %0.4f)' % AUC_prec_rec)
-# plt.title('Precision - Recall curve')
-# plt.xlabel("Recall")
-# plt.ylabel("Precision")
-# plt.legend(loc="lower right")
-# plt.savefig(path_experiment+"Precision_recall.png")
-
-# #Confusion matrix
-# threshold_confusion = 0.5
-# print("\nConfusion matrix:  Custom threshold (for positive) of " +str(threshold_confusion))
-# y_pred = np.empty((y_scores.shape[0]))
-# for i in range(y_scores.shape[0]):
-#     if y_scores[i]>=threshold_confusion:
-#         y_pred[i]=1
-#     else:
-#         y_pred[i]=0
-# confusion = confusion_matrix(y_true.astype(int), y_pred)
-# print(confusion)
-# accuracy = 0
-# if float(np.sum(confusion))!=0:
-#     accuracy = float(confusion[0,0]+confusion[1,1])/float(np.sum(confusion))
-# print("Global Accuracy: " +str(accuracy))
-# specificity = 0
-# if float(confusion[0,0]+confusion[0,1])!=0:
-#     specificity = float(confusion[0,0])/float(confusion[0,0]+confusion[0,1])
-# print("Specificity: " +str(specificity))
-# sensitivity = 0
-# if float(confusion[1,1]+confusion[1,0])!=0:
-#     sensitivity = float(confusion[1,1])/float(confusion[1,1]+confusion[1,0])
-# print("Sensitivity: " +str(sensitivity))
-# precision = 0
-# if float(confusion[1,1]+confusion[0,1])!=0:
-#     precision = float(confusion[1,1])/float(confusion[1,1]+confusion[0,1])
-# print("Precision: " +str(precision))
-
-# #Jaccard similarity index
-# jaccard_index = jaccard_similarity_score(y_true.astype(int), y_pred, normalize=True)
-# print("\nJaccard similarity score: " +str(jaccard_index))
-
-# #F1 score
-# F1_score = f1_score(y_true.astype(int), y_pred, labels=None, average='binary', sample_weight=None)
-# print("\nF1 score (F-measure): " +str(F1_score))
-
-# #Save the results
-# file_perf = open(path_experiment+'performances.txt', 'w')
-# file_perf.write("Area under the ROC curve: "+str(AUC_ROC)
-#                 + "\nArea under Precision-Recall curve: " +str(AUC_prec_rec)
-#                 + "\nJaccard similarity score: " +str(jaccard_index)
-#                 + "\nF1 score (F-measure): " +str(F1_score)
-#                 +"\n\nConfusion matrix:"
-#                 +str(confusion)
-#                 +"\nACCURACY: " +str(accuracy)
-#                 +"\nSENSITIVITY: " +str(sensitivity)
-#                 +"\nSPECIFICITY: " +str(specificity)
-#                 +"\nPRECISION: " +str(precision)
-#                 )
-# file_perf.close()

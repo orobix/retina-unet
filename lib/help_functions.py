@@ -5,7 +5,6 @@ from PIL import Image
 from matplotlib import pyplot as plt
 import tensorflow as tf
 from tensorflow.io import decode_png
-import keras
 
 
 MEAN = 0
@@ -22,6 +21,7 @@ def write_hdf5(arr,outfile):
 def normalize(image, label):
     # image = (image - MEAN) / STD
     image = tf.cast(image, tf.float32) / 85. - 3.     # 255 / 3 for range -3 to 3
+    label = tf.cast(label, tf.float32)
     return image, label
 
 def _parse_function(proto):
@@ -38,22 +38,23 @@ def _parse_function(proto):
     
     return parsed_features['image'], parsed_features["label"]
 
-def load_tfrecord(filepath, patch_size, batch_size, N_imgs):
+def load_tfrecord(filepath, patch_size, batch_size, N_imgs, shuffle=True):
     # This works with arrays as well
     dataset = tf.data.TFRecordDataset(glob.glob(filepath))
     
-    # This dataset will go on forever
-    dataset = dataset.repeat()
-    
-    # Set the number of datapoints you want to load and shuffle 
-    dataset = dataset.shuffle(N_imgs)
+    # Set the number of datapoints you want to load and shuffle
+    if shuffle:
+        dataset = dataset.shuffle(N_imgs)
 
     # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
     dataset = dataset.map(_parse_function, num_parallel_calls=8)
     dataset = dataset.map(normalize, num_parallel_calls=8)
     
     # Set the batchsize
-    dataset = dataset.batch(batch_size)
+    dataset = dataset.batch(batch_size, drop_remainder=True)
+
+    # This dataset will go on forever
+    dataset = dataset.repeat()
     
     # Create an iterator
     iterator = dataset.make_one_shot_iterator()
@@ -119,11 +120,11 @@ def masks_Unet(masks):
 
 def pred_to_imgs(pred, patch_height, patch_width, mode="original"):
     assert (len(pred.shape)==3)  #3D array: (Npatches,height*width,2)
-    assert (pred.shape[2]==2 )  #check the classes are 2
-    if mode=="original":
-        pred[:,:]=pred[:,:,1]
-    elif mode=="threshold":
-        pred[:,:]=np.amax(pred, axis=2)
+    assert (pred.shape[2]==2)  #check the classes are 2
+    if mode == "original":
+        pred[:,:] = pred[:,:,1]
+    elif mode == "threshold":
+        pred[:,:] = np.amax(pred, axis=2)
     else:
         print("mode " +str(mode) +" not recognized, it can be 'original' or 'threshold'")
         exit()

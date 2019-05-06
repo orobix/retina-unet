@@ -11,25 +11,24 @@
 import numpy as np
 import configparser
 
-from keras.models import Model
-from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, UpSampling2D, Reshape, core, Dropout, Dense, Dropout, BatchNormalization, AveragePooling2D, Activation, ZeroPadding2D, add, Flatten
-from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint, LearningRateScheduler
-from keras.utils.vis_utils import plot_model as plot
-from keras.optimizers import SGD
-import keras.backend as K
-
 import tensorflow as tf
+
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, concatenate, Conv2D, MaxPooling2D, UpSampling2D, Reshape, Dropout, Dense, Dropout, BatchNormalization, AveragePooling2D, Activation, ZeroPadding2D, add, Permute, Activation
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
+from tensorflow.keras.utils import plot_model as plot
+from tensorflow.keras.optimizers import SGD
+import tensorflow.keras.backend as K
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 import sys
 sys.path.insert(0, './lib/')
 from help_functions import *
 
-
-
 #Define the neural network
-def get_unet(n_ch, patch_height, patch_width):
-    inputs = Input(shape = (n_ch,patch_height,patch_width))
+def get_unet(tensor, label, n_ch, patch_height, patch_width):
+    inputs = Input(batch_shape=(32, n_ch, patch_height, patch_width))
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first')(inputs)
     conv1 = Dropout(0.2)(conv1)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same',data_format='channels_first')(conv1)
@@ -57,15 +56,19 @@ def get_unet(n_ch, patch_height, patch_width):
     conv5 = Conv2D(32, (3, 3), activation='relu', padding='same',data_format='channels_first')(conv5)
     #
     conv6 = Conv2D(2, (1, 1), activation='relu',padding='same',data_format='channels_first')(conv5)
-    conv6 = core.Reshape((2,patch_height*patch_width))(conv6)
-    conv6 = core.Permute((2,1))(conv6)
+    conv6 = Reshape((2, patch_height*patch_width))(conv6)
+    conv6 = Permute((2,1))(conv6)
     ############
-    conv7 = core.Activation('softmax')(conv6)
+    conv7 = Activation('softmax')(conv6)
 
     model = Model(inputs=inputs, outputs=conv7)
 
     # sgd = SGD(lr=0.01, decay=1e-6, momentum=0.3, nesterov=False)
-    model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(
+        optimizer='sgd',
+        loss='categorical_crossentropy',
+        metrics=['accuracy']
+    )
 
     return model  
     
@@ -114,9 +117,6 @@ batch_size = int(config.get('training settings', 'batch_size'))
 N_subimgs = int(config.get('training settings', 'N_subimgs'))
 patch_size = (int(config.get('data attributes', 'patch_height')), int(config.get('data attributes', 'patch_width')))
 
-#============ Load the data and normalize
-patches_imgs_train, patches_gts_train = load_tfrecord(path_data + train_path, patch_size, batch_size, N_subimgs)
-
 #========= Save a sample of what you're feeding to the neural network ==========
 patches_imgs_samples, patches_gts_samples = load_tfrecord(path_data + train_path, patch_size, batch_size, N_subimgs)
 patches_imgs_samples = (patches_imgs_samples[0:20] + 3) * 85
@@ -126,11 +126,14 @@ session = K.get_session()
 imgs_samples = session.run(tf.concat([patches_imgs_samples, patches_gts_samples], 0))
 visualize(group_images(imgs_samples, 5), './'+name_experiment+'/'+"sample_input")#.show()
 
+#============ Load the data and normalize
+patches_imgs_train, patches_gts_train = load_tfrecord(path_data + train_path, patch_size, batch_size, N_subimgs)
+
 #=========== Construct and save the model arcitecture =====
-n_ch = patches_imgs_train.shape[1]
-patch_height = patches_imgs_train.shape[2]
-patch_width = patches_imgs_train.shape[3]
-model = get_unet(n_ch, patch_height, patch_width)  #the U-net model
+n_ch = int(patches_imgs_train.shape[1])
+patch_height = int(patches_imgs_train.shape[2])
+patch_width = int(patches_imgs_train.shape[3])
+model = get_unet(patches_imgs_train, patches_gts_train, n_ch, patch_height, patch_width)  #the U-net model
 #model = resnet_50(n_ch, patch_height, patch_width)  #the ResNet model
 print("Check: final output of the network:")
 print(model.output_shape)
@@ -148,13 +151,11 @@ checkpointer = ModelCheckpoint(
     mode='auto', 
     save_best_only=True) #save at each epoch if the validation decreased
 
-patches_masks_train = masks_Unet(patches_masks_train)  #reduce memory consumption
-model.fit_generator(
-    datagen.flow(patches_imgs_train, patches_masks_train, batch_size = batch_size),
+model.fit(
+    patches_imgs_train, patches_gts_train,
     epochs = N_epochs,
     steps_per_epoch = int(N_subimgs / batch_size),
-    verbose=2,
-    validation_split=0.1,
+    batch_size = batch_size,
     callbacks=[checkpointer])
 
 #========== Save and test the last model ===================
