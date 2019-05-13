@@ -11,16 +11,10 @@ import numpy as np
 import configparser
 from matplotlib import pyplot as plt
 #Keras
-from keras.models import model_from_json
-from keras.models import Model
+from tensorflow.keras.models import model_from_json
+from tensorflow.keras.models import Model
 import tensorflow as tf
-#scikit learn
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import jaccard_similarity_score
-from sklearn.metrics import f1_score
+
 import sys
 sys.path.insert(0, './lib/')
 # help_functions.py
@@ -63,7 +57,7 @@ average_mode = config.getboolean('testing settings', 'average_mode')
 
 
 #============ Load the data ===================
-patches_imgs_test, masks_test = load_tfrecord(filepath, patch_size, 32, Imgs_to_test, False)
+dataset = load_testset(filepath, patch_size, 32, Imgs_to_test)
 
 #================ Run the prediction of the patches ==================================
 best_last = config.get('testing settings', 'best_last')
@@ -71,7 +65,8 @@ best_last = config.get('testing settings', 'best_last')
 model = model_from_json(open(path_experiment+name_experiment +'_architecture.json').read())
 model.load_weights(path_experiment+name_experiment + '_'+best_last+'_weights.h5')
 #Calculate the predictions
-predictions = model.predict(patches_imgs_test, batch_size=32, verbose=2) 
+N_subimgs = config.get('testing settings', 'full_images_to_test')
+predictions = model.predict(dataset, batch_size=32, verbose=2, steps_per_epoch=int(Imgs_to_test / 32)) 
 print("predicted images size :")
 print(predictions.shape)
 
@@ -79,7 +74,7 @@ print(predictions.shape)
 print("\n\n========  Evaluate the results =======================")
 
 #Area under the ROC curve
-auc, update_op = tf.metrics.auc(masks_test, predictions)
+auc, update_op_auc = tf.metrics.auc(dataset, predictions)
 print("\nArea under the ROC curve: " +str(auc))
 roc_curve=plt.figure()
 plt.plot(fpr,tpr,'-',label='Area Under the Curve (AUC = %0.4f)' % auc )
@@ -90,10 +85,8 @@ plt.legend(loc="lower right")
 plt.savefig(path_experiment+"ROC.png")
 
 #Precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_true.astype(int), y_scores)
-precision = np.fliplr([precision])[0]  #so the array is increasing (you won't get negative AUC)
-recall = np.fliplr([recall])[0]  #so the array is increasing (you won't get negative AUC)
-AUC_prec_rec = np.trapz(precision,recall)
+recall, update_op_recall = tf.metrics.recall(dataset, predictions)
+precision, update_op_precision = tf.metrics.precision(dataset, predictions)
 print("\nArea under Precision-Recall curve: " +str(AUC_prec_rec))
 prec_rec_curve = plt.figure()
 plt.plot(recall,precision,'-',label='Area Under the Curve (AUC = %0.4f)' % AUC_prec_rec)
@@ -106,13 +99,11 @@ plt.savefig(path_experiment+"Precision_recall.png")
 #Confusion matrix
 threshold_confusion = 0.5
 print("\nConfusion matrix:  Custom threshold (for positive) of " +str(threshold_confusion))
-y_pred = np.empty((y_scores.shape[0]))
-for i in range(y_scores.shape[0]):
-    if y_scores[i]>=threshold_confusion:
-        y_pred[i]=1
-    else:
-        y_pred[i]=0
-confusion = confusion_matrix(y_true.astype(int), y_pred)
+tp, u_op_fn = tf.metrics.true_positives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
+tn, u_op_fn = tf.metrics.true_negatives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
+fp, u_op_fn = tf.metrics.false_positives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
+fn, u_op_fn = tf.metrics.false_negatives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
+confusion = np.array([[tp, fp], [tn, fn]])
 print(confusion)
 accuracy = 0
 if float(np.sum(confusion))!=0:
@@ -130,14 +121,6 @@ precision = 0
 if float(confusion[1,1]+confusion[0,1])!=0:
     precision = float(confusion[1,1])/float(confusion[1,1]+confusion[0,1])
 print("Precision: " +str(precision))
-
-#Jaccard similarity index
-jaccard_index = jaccard_similarity_score(y_true.astype(int), y_pred, normalize=True)
-print("\nJaccard similarity score: " +str(jaccard_index))
-
-#F1 score
-F1_score = f1_score(y_true.astype(int), y_pred, labels=None, average='binary', sample_weight=None)
-print("\nF1 score (F-measure): " +str(F1_score))
 
 #Save the results
 file_perf = open(path_experiment+'performances.txt', 'w')

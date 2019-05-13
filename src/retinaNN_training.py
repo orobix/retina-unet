@@ -55,11 +55,10 @@ def get_unet(tensor, label, n_ch, patch_height, patch_width):
     conv5 = Dropout(0.2)(conv5)
     conv5 = Conv2D(32, (3, 3), activation='relu', padding='same',data_format='channels_first')(conv5)
     #
-    conv6 = Conv2D(2, (1, 1), activation='relu',padding='same',data_format='channels_first')(conv5)
-    conv6 = Reshape((2, patch_height*patch_width))(conv6)
-    conv6 = Permute((2,1))(conv6)
+    conv6 = Conv2D(1, (1, 1), activation='relu',padding='same',data_format='channels_first')(conv5)
+    conv6 = Reshape((1, patch_height * patch_width))(conv6)
     ############
-    conv7 = Activation('softmax')(conv6)
+    conv7 = Activation('sigmoid')(conv6)
 
     model = Model(inputs=inputs, outputs=conv7)
 
@@ -120,7 +119,7 @@ patch_size = (int(config.get('data attributes', 'patch_height')), int(config.get
 #========= Save a sample of what you're feeding to the neural network ==========
 patches_imgs_samples, patches_gts_samples = load_tfrecord(path_data + train_path, patch_size, batch_size, N_subimgs)
 patches_imgs_samples = (patches_imgs_samples[0:20] + 3) * 85
-patches_gts_samples = tf.cast(patches_gts_samples[0:20], tf.float32)
+patches_gts_samples = tf.reshape(tf.cast(patches_gts_samples[0:20], tf.float32), [20, 1, patch_size[0], patch_size[1]])
 
 session = K.get_session()
 imgs_samples = session.run(tf.concat([patches_imgs_samples, patches_gts_samples], 0))

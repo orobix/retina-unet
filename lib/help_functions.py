@@ -38,9 +38,23 @@ def _parse_function(proto):
 
     # Bring your picture back in shape
     image = tf.reshape(image, [1, PATCH_SIZE[0], PATCH_SIZE[1]])
-    label = tf.reshape(label, [1, PATCH_SIZE[0], PATCH_SIZE[1]])
+    label = tf.reshape(label, [1, PATCH_SIZE[0] * PATCH_SIZE[1]])
     
     return image, label
+
+def load_testset(filepath, patch_size, batch_size, N_imgs):
+    PATCH_SIZE = patch_size
+    # This works with arrays as well
+    dataset = tf.data.TFRecordDataset(glob.glob(filepath))
+    
+    # Set the number of datapoints you want to load and shuffle
+    if shuffle:
+        dataset = dataset.shuffle(N_imgs)
+
+    # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
+    dataset = dataset.map(_parse_function, num_parallel_calls=8)
+    dataset = dataset.map(normalize, num_parallel_calls=8)
+    return dataset.batch(batch_size, drop_remainder=True).repeat()
 
 def load_dataset(filepath, patch_size, batch_size, N_imgs, shuffle=True):
     PATCH_SIZE = patch_size
