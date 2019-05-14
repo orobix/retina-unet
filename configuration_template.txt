@@ -1,10 +1,11 @@
 [data paths]
-path_local =  ./
-### train_data_path = DRIVE_datasets/dataset__train*.tfrecord
-### test_data_path = DRIVE_datasets/dataset__test*.tfrecord
+path_local =  ./experiments
+### train_data_path = ./DRIVE_datasets/dataset__train*.tfrecord
+### test_data_path = ./DRIVE_datasets/dataset__test*.tfrecord
 
-[experiment name]
+[experiment]
 ### name = try
+### arch = unet
 
 [data attributes]
 #Dimensions of the patches extracted from the full images
@@ -16,7 +17,7 @@ img_width = 568
 [training settings]
 # Number of training epochs
 N_epochs = 150
-batch_size = 32
+batch_size = 64
 # if running with nohup
 nohup = False
 

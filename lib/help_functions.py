@@ -1,93 +1,17 @@
-import h5py
 import numpy as np
-import glob
 from PIL import Image
-from matplotlib import pyplot as plt
-import tensorflow as tf
-from tensorflow.io import decode_png
+import errno    
+import os
 
 
-PATCH_SIZE = (48, 48)
-
-def load_hdf5(infile):
-  with h5py.File(infile,"r") as f:  #"with" close the file after its nested commands
-    return f["image"][()]
-
-def write_hdf5(arr,outfile):
-  with h5py.File(outfile,"w") as f:
-    f.create_dataset("image", data=arr, dtype=arr.dtype)
-
-def normalize(image, label):
-    # image = (image - MEAN) / STD
-    image = tf.cast(image, tf.float32) / 85. - 3.     # 255 / 3 for range -3 to 3
-    label = tf.cast(label, tf.float32)
-    return image, label
-
-def _parse_function(proto):
-    # define your tfrecord again. Remember that you saved your image as a string.
-    keys_to_features = {'image': tf.FixedLenFeature([], tf.string),
-                        'label': tf.FixedLenFeature([], tf.string)}
-    
-    # Load one example
-    parsed_features = tf.parse_single_example(proto, keys_to_features)
-    
-    # Turn your saved image string into an array
-    image = decode_png(parsed_features['image'])
-    label = decode_png(parsed_features['label'])
-
-
-    # Bring your picture back in shape
-    image = tf.reshape(image, [1, PATCH_SIZE[0], PATCH_SIZE[1]])
-    label = tf.reshape(label, [1, PATCH_SIZE[0] * PATCH_SIZE[1]])
-    
-    return image, label
-
-def load_testset(filepath, patch_size, batch_size, N_imgs):
-    PATCH_SIZE = patch_size
-    # This works with arrays as well
-    dataset = tf.data.TFRecordDataset(glob.glob(filepath))
-    
-    # Set the number of datapoints you want to load and shuffle
-    if shuffle:
-        dataset = dataset.shuffle(N_imgs)
-
-    # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
-    dataset = dataset.map(_parse_function, num_parallel_calls=8)
-    dataset = dataset.map(normalize, num_parallel_calls=8)
-    return dataset.batch(batch_size, drop_remainder=True).repeat()
-
-def load_dataset(filepath, patch_size, batch_size, N_imgs, shuffle=True):
-    PATCH_SIZE = patch_size
-    # This works with arrays as well
-    dataset = tf.data.TFRecordDataset(glob.glob(filepath))
-    
-    # Set the number of datapoints you want to load and shuffle
-    if shuffle:
-        dataset = dataset.shuffle(N_imgs)
-
-    # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
-    dataset = dataset.map(_parse_function, num_parallel_calls=8)
-    dataset = dataset.map(normalize, num_parallel_calls=8)
-
-    #split in testing and training
-    test_data = dataset.take(int(N_imgs / 10)) \
-        .batch(batch_size, drop_remainder=True) \
-        .repeat()
-    train_data = dataset.skip(int(N_imgs / 10)) \
-        .batch(batch_size, drop_remainder=True) \
-        .repeat()
-    return test_data, train_data
-
-def load_tfrecord(filepath, patch_size, batch_size, N_imgs, shuffle=True):    
-    test_data, train_data = load_dataset(filepath, patch_size, batch_size, N_imgs, shuffle)
-    
-    # Create an iterator
-    iterator = train_data.make_one_shot_iterator()
-    
-    # Create your tf representation of the iterator
-    image, label = iterator.get_next()
-
-    return image, label
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 #group a set of images row per columns
 def group_images(data, per_row):

@@ -1,10 +1,11 @@
 [data paths]
-path_local = ./
-train_data_path = DRIVE_datasets/dataset__train*.tfrecord
-test_data_path = DRIVE_datasets/dataset__test*.tfrecord
+path_local = ./experiments
+train_data_path = ./DRIVE_datasets/dataset__train*.tfrecord
+test_data_path = ./DRIVE_datasets/dataset__test*.tfrecord
 
-[experiment name]
+[experiment]
 name = DRIVE_DRIVE_experiment
+arch = unet
 
 [data attributes]
 patch_height = 48
@@ -14,7 +15,7 @@ img_width = 568
 
 [training settings]
 n_epochs = 150
-batch_size = 32
+batch_size = 64
 nohup = False
 n_subimgs = 216320
 

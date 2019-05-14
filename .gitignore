@@ -9,3 +9,4 @@ DRIVE_Synth*
 Synth*
 *.hdf5
 *.tfrecord
+experiments

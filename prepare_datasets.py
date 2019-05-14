@@ -35,10 +35,6 @@ stride_size = (stride_h, stride_w)
 
 N_patches_per_img = ((height + stride_h - (height - patch_h) % stride_h - patch_h)//stride_h + 1)*((width + stride_w - (width - patch_w) % stride_w - patch_w)//stride_w + 1)
 
-def write_hdf5(arr,outfile):
-    with h5py.File(outfile,"w") as f:
-        f.create_dataset("image", data=arr, dtype=arr.dtype)
-
 def mkdirs(newdir):
     try: os.makedirs(newdir)
     except OSError as err:
