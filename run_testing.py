@@ -6,27 +6,28 @@
 
 import os, sys
 import configparser
+sys.path.insert(0, './lib/')
+from help_functions import mkdir_p
 
 
 #config file to read from
 config = configparser.RawConfigParser()
-config.readfp(open(r'./configuration.txt'))
+config.read('./configuration.txt')
 #===========================================
-#name of the experiment!!
-name_experiment = config.get('experiment name', 'name')
-nohup = config.getboolean('testing settings', 'nohup')   #std output on log file?
+#name of the experiment
+path_data = config.get('data paths', 'path_local')
+name_experiment = config.get('experiment', 'name')
+arch = config.get('experiment', 'arch')
+experiment_path = path_data + '/' + name_experiment + '_' + arch
+
+config_path = experiment_path + '/' + name_experiment + '_configuration.txt'
+
+nohup = config.getboolean('training settings', 'nohup')   #std output on log file?
 
 run_GPU = '' if sys.platform == 'win32' else ' THEANO_FLAGS=device=gpu,floatX=float32 '
 
-#create a folder for the results if not existing already
-result_dir = name_experiment
-print("\n1. Create directory for the results (if not already existing)")
-if os.path.exists(result_dir):
-    pass
-elif sys.platform=='win32':
-    os.system('md ' + result_dir)
-else:
-    os.system('mkdir -p ' + result_dir)
+#create a folder for the results
+mkdir_p(experiment_path)
 
 
 # finally run the prediction

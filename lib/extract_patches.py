@@ -2,10 +2,6 @@ import numpy as np
 import random
 import configparser
 
-from help_functions import load_hdf5
-from help_functions import visualize
-from help_functions import group_images
-
 from skimage.util.shape import view_as_blocks
 from skimage.util.shape import view_as_windows
 from skimage.util import pad

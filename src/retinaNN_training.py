@@ -116,11 +116,13 @@ checkpointer = ModelCheckpoint(
 tensorboard = TensorBoard(
     log_dir = experiment_path + '/logs/{}'.format(time()),
     write_images = True,
-    batch_size = batch_size
+    batch_size = batch_size,
+    histogram_freq = 1
 )
 
-model.fit( train_dataset,
-    epochs = N_epochs,
+model.fit(
+    train_dataset,
+    epochs = 1,
     steps_per_epoch = int(N_subimgs / batch_size),
     batch_size = batch_size,
     validation_data = test_dataset,

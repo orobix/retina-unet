@@ -12,7 +12,7 @@ from help_functions import mkdir_p
 
 #config file to read from
 config = configparser.RawConfigParser()
-config.readfp(open(r'./configuration.txt'))
+config.read('./configuration.txt')
 #===========================================
 #name of the experiment
 path_data = config.get('data paths', 'path_local')

@@ -26,7 +26,7 @@ nohup = False
 # Choose the model to test: best==epoch with min loss, last==last epoch
 best_last = best
 # number of full images for the test
-### full_images_to_test = 20 
+### imgs_to_visualize = 20 
 
 # How many original-groundTruth-prediction images are visualized in each image
 N_group_visual = 1

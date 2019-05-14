@@ -29,6 +29,8 @@ N_imgs_train = 9000
 average_mode = True
 stride_height = 5
 stride_width = 5
+subimgs_per_dim = 104
+imgs_to_visualize = 20
 
 [data attributes]
 #Dimensions of the patches extracted from the full images
