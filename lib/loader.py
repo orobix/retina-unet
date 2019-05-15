@@ -61,7 +61,7 @@ def load_images_labels(filepath, batch_size, N_imgs, shuffle=True):
 # ================================ HELPER =======================================
 def normalize(image, label):
     # image = (image - MEAN) / STD
-    image = (tf.cast(image, tf.float32) - 127.5) / (255. / 3.)    # 255 / 3 for range -3 to 3
+    image = (tf.cast(image, tf.float32) - 127.5) / (255. / 3.)    # normalize to [-3, 3]
     label = tf.cast(label, tf.float32) / 255.         # label from 0 - 1
     return image, label
 

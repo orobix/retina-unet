@@ -50,5 +50,5 @@ for arch in archs:
 
     ### run experiment
     os.system('python run_training.py')
-    os.system('python run_testing.py')
+    # os.system('python run_testing.py')
     break

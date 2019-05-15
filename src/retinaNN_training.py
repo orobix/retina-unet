@@ -117,12 +117,13 @@ tensorboard = TensorBoard(
     log_dir = experiment_path + '/logs/{}'.format(time()),
     write_images = True,
     batch_size = batch_size,
-    histogram_freq = 1
+    embeddings_freq = 1,
+    embeddings_layer_names = ['input', 'output'],
 )
 
 model.fit(
     train_dataset,
-    epochs = 1,
+    epochs = N_epochs,
     steps_per_epoch = int(N_subimgs / batch_size),
     batch_size = batch_size,
     validation_data = test_dataset,

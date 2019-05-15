@@ -25,6 +25,8 @@ from extract_patches import recompone
 from extract_patches import recompone_overlap
 
 session = K.get_session()
+def weighted_cross_entropy(y_true, y_pred):
+    return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, 1.)
 
 #========= CONFIG FILE TO READ FROM =======
 config = configparser.RawConfigParser()
@@ -67,6 +69,19 @@ best_last = config.get('testing settings', 'best_last')
 model = model_from_json(
     open(experiment_path + '/' + name_experiment +'_architecture.json').read()
 )
+model.compile(
+    optimizer = 'adam',
+    loss = weighted_cross_entropy,
+    metrics = [
+        'accuracy',
+        tf.keras.metrics.Precision(),
+        tf.keras.metrics.Recall(),
+        tf.keras.metrics.TruePositives(),
+        tf.keras.metrics.TrueNegatives(),
+        tf.keras.metrics.FalsePositives(),
+        tf.keras.metrics.FalseNegatives(),
+    ]
+)
 model.load_weights(experiment_path + '/' + name_experiment + '_'+best_last+'_weights.h5')
 
 #Calculate the predictions
@@ -74,10 +89,20 @@ predictions = model.predict(
     dataset,
     batch_size = batch_size,
     steps = int(N_subimgs / batch_size)
-) 
+)
 
-print("predicted images size :")
-print(predictions.shape)
+values = model.evaluate(
+    dataset,
+    batch_size = batch_size,
+    steps = int(N_subimgs / batch_size),
+    verbose = 2
+)
+
+print(values)
+
+# print("predicted images size :")
+# print(predictions.shape)
+# print(dataset.shape)
 
 #========================== Evaluate the results ===================================
 print("\n\n========  Evaluate the results =======================")
