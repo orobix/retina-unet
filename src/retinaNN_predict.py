@@ -72,15 +72,7 @@ model = model_from_json(
 model.compile(
     optimizer = 'adam',
     loss = weighted_cross_entropy,
-    metrics = [
-        'accuracy',
-        tf.keras.metrics.Precision(),
-        tf.keras.metrics.Recall(),
-        tf.keras.metrics.TruePositives(),
-        tf.keras.metrics.TrueNegatives(),
-        tf.keras.metrics.FalsePositives(),
-        tf.keras.metrics.FalseNegatives(),
-    ]
+    metrics = ['accuracy']
 )
 model.load_weights(experiment_path + '/' + name_experiment + '_'+best_last+'_weights.h5')
 
@@ -91,18 +83,9 @@ predictions = model.predict(
     steps = int(N_subimgs / batch_size)
 )
 
-values = model.evaluate(
-    dataset,
-    batch_size = batch_size,
-    steps = int(N_subimgs / batch_size),
-    verbose = 2
-)
-
-print(values)
-
-# print("predicted images size :")
-# print(predictions.shape)
-# print(dataset.shape)
+print("predicted images size :")
+print(predictions.shape)
+print(dataset.shape)
 
 #========================== Evaluate the results ===================================
 print("\n\n========  Evaluate the results =======================")

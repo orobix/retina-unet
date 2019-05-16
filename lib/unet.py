@@ -1,4 +1,4 @@
-from tensorflow.keras.layers import Input, Conv2D, Dropout, MaxPooling2D, UpSampling2D, concatenate, Reshape
+from tensorflow.keras.layers import Input, Conv2D, Dropout, MaxPooling2D, UpSampling2D, concatenate, Reshape, Activation
 from tensorflow.keras.models import Model
 
 
@@ -31,9 +31,9 @@ def get_unet(n_ch, batch_size, patch_height, patch_width):
     conv5 = Conv2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first')(conv5)
     #
     conv6 = Conv2D(1, (1, 1), activation='relu',padding='same', data_format='channels_first', name="output")(conv5)
-    conv6 = Reshape((1, patch_height * patch_width))(conv6)
+    conv7 = Reshape((1, patch_height * patch_width))(conv6)
     ############
-    # conv7 = Activation('sigmoid')(conv6)
+    conv7 = Activation('sigmoid')(conv7)
 
-    model = Model(inputs=inputs, outputs=conv6)
+    model = Model(inputs=inputs, outputs=conv7)
     return model 

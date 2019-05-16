@@ -17,7 +17,7 @@ img_width = 568
 [training settings]
 # Number of training epochs
 N_epochs = 150
-batch_size = 64
+batch_size = 32
 # if running with nohup
 nohup = False
 

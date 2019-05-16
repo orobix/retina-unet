@@ -15,7 +15,7 @@ img_width = 568
 
 [training settings]
 n_epochs = 150
-batch_size = 64
+batch_size = 32
 nohup = False
 n_subimgs = 216320
 

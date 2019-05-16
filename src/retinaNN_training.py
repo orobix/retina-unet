@@ -12,7 +12,7 @@ import numpy as np
 import configparser
 
 import tensorflow as tf
-from time import time
+from datetime import datetime
 from tensorflow.python.keras.callbacks import TensorBoard
 
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -25,11 +25,12 @@ from help_functions import *
 from loader import load_trainset, load_images_labels
 from unet import get_unet
 
-LOSS_WEIGHT = 1.
 session = K.get_session()
 
-def weighted_cross_entropy(y_true, y_pred):
-    return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, LOSS_WEIGHT)
+def weighted_cross_entropy(weight):
+    def loss(y_true, y_pred):
+        return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, weight)
+    return loss
 
 #========= Load settings from Config file =====================================
 config = configparser.RawConfigParser()
@@ -94,7 +95,8 @@ else:
 
 model.compile(
     optimizer = 'adam',
-    loss = weighted_cross_entropy,
+    # loss = weighted_cross_entropy(LOSS_WEIGHT),
+    loss = 'mse',
     metrics = ['accuracy']
 )
 
@@ -114,21 +116,37 @@ checkpointer = ModelCheckpoint(
     save_best_only = True) #save at each epoch if the validation decreased
 
 tensorboard = TensorBoard(
-    log_dir = experiment_path + '/logs/{}'.format(time()),
-    write_images = True,
+    log_dir = experiment_path + '/logs/{}'.format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')),
+    #write_images = True,
     batch_size = batch_size,
-    embeddings_freq = 1,
-    embeddings_layer_names = ['input', 'output'],
+    histogram_freq = 5,
 )
 
+train_x, train_y = train_dataset.make_one_shot_iterator().get_next()
+size = int(batch_size * 30)
+train_x = tf.tile(tf.reshape(train_x[0], [1, 1, 48, 48]), [size, 1, 1, 1])
+train_y = tf.tile(tf.reshape(train_y[0], [1, 1, 2304]), [size, 1, 1])
+
+train_x, train_y = session.run([train_x, train_y])
+
 model.fit(
-    train_dataset,
+    train_x,
+    train_y,
     epochs = N_epochs,
-    steps_per_epoch = int(N_subimgs / batch_size),
     batch_size = batch_size,
-    validation_data = test_dataset,
-    validation_steps = int(N_subimgs / 10 / batch_size),
+    verbose = 2,
+    validation_split= 0.1,
     callbacks = [checkpointer, tensorboard])
+
+
+# model.fit(
+#     train_dataset,
+#     epochs = N_epochs,
+#     steps_per_epoch = int(N_subimgs / batch_size),
+#     validation_data = test_dataset,
+#     validation_steps = int(10),
+#     verbose = 2,
+#     callbacks = [checkpointer, tensorboard])
 
 #========== Save and test the last model ==================================
 model.save_weights(experiment_path + '/' + name_experiment +'_last_weights.h5', overwrite=True)
