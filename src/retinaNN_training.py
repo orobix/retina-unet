@@ -81,11 +81,11 @@ test_dataset, train_dataset = load_trainset(
     batch_size,
     N_subimgs
 )
-_, labels = train_dataset.make_one_shot_iterator().get_next()
+# _, labels = train_dataset.make_one_shot_iterator().get_next()
 
-gt_mean = tf.math.reduce_mean(labels)
-gt_mean = session.run(gt_mean)
-LOSS_WEIGHT = (1. - gt_mean) / gt_mean
+# gt_mean = tf.math.reduce_mean(labels)
+# gt_mean = session.run(gt_mean)
+# LOSS_WEIGHT = (1. - gt_mean) / gt_mean
 
 #=========== Construct and save the model arcitecture ===========================
 if u_net:
@@ -96,7 +96,7 @@ else:
 model.compile(
     optimizer = 'adam',
     # loss = weighted_cross_entropy(LOSS_WEIGHT),
-    loss = 'mse',
+    loss = 'categorical_crossentropy',
     metrics = ['accuracy']
 )
 
@@ -122,31 +122,31 @@ tensorboard = TensorBoard(
     histogram_freq = 5,
 )
 
-train_x, train_y = train_dataset.make_one_shot_iterator().get_next()
-size = int(batch_size * 30)
-train_x = tf.tile(tf.reshape(train_x[0], [1, 1, 48, 48]), [size, 1, 1, 1])
-train_y = tf.tile(tf.reshape(train_y[0], [1, 1, 2304]), [size, 1, 1])
+# train_x, train_y = train_dataset.make_one_shot_iterator().get_next()
+# size = int(batch_size * 30)
+# train_x = tf.tile(tf.reshape(train_x[0], [1, 1, 48, 48]), [size, 1, 1, 1])
+# train_y = tf.tile(tf.reshape(train_y[0], [1, 1, 2304]), [size, 1, 1])
 
-train_x, train_y = session.run([train_x, train_y])
-
-model.fit(
-    train_x,
-    train_y,
-    epochs = N_epochs,
-    batch_size = batch_size,
-    verbose = 2,
-    validation_split= 0.1,
-    callbacks = [checkpointer, tensorboard])
-
+# train_x, train_y = session.run([train_x, train_y])
 
 # model.fit(
-#     train_dataset,
+#     train_x,
+#     train_y,
 #     epochs = N_epochs,
-#     steps_per_epoch = int(N_subimgs / batch_size),
-#     validation_data = test_dataset,
-#     validation_steps = int(10),
+#     batch_size = batch_size,
 #     verbose = 2,
+#     validation_split= 0.1,
 #     callbacks = [checkpointer, tensorboard])
+
+
+model.fit(
+    train_dataset,
+    epochs = N_epochs,
+    steps_per_epoch = int(N_subimgs / batch_size),
+    validation_data = test_dataset,
+    validation_steps = int(10),
+    verbose = 2,
+    callbacks = [checkpointer, tensorboard])
 
 #========== Save and test the last model ==================================
 model.save_weights(experiment_path + '/' + name_experiment +'_last_weights.h5', overwrite=True)
