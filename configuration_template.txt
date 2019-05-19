@@ -13,6 +13,7 @@ patch_height = 48
 patch_width = 48 
 img_height = 568
 img_width = 568
+patches_per_img = 10816
 
 [training settings]
 # Number of training epochs

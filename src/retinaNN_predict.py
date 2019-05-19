@@ -35,8 +35,8 @@ config.read('configuration.txt')
 path_data = config.get('data paths', 'path_local')
 test_data_path = config.get('data paths', 'test_data_path')
 
-full_img_height = config.get('data attributes', 'img_height')
-full_img_width = config.get('data attributes', 'img_width')
+full_img_height = int(config.get('data attributes', 'img_height'))
+full_img_width = int(config.get('data attributes', 'img_width'))
 
 # dimension of the patches
 patch_size = (int(config.get('data attributes', 'patch_height')), int(config.get('data attributes', 'patch_width')))
@@ -53,6 +53,7 @@ experiment_path = path_data + '/' + name_experiment + '_' + arch
 #N full images to be predicted
 imgs_to_visualize = int(config.get('testing settings', 'imgs_to_visualize'))
 N_subimgs = int(config.get('testing settings', 'N_subimgs'))
+patches_per_img = int(config.get('data attributes', 'patches_per_img'))
 
 #Grouping of the predicted images
 N_visual = int(config.get('testing settings', 'N_group_visual'))
@@ -76,6 +77,7 @@ model.compile(
 )
 model.load_weights(experiment_path + '/' + name_experiment + '_'+best_last+'_weights.h5')
 
+print("start prediction")
 #Calculate the predictions
 predictions = model.predict(
     dataset,
@@ -85,7 +87,36 @@ predictions = model.predict(
 
 print("predicted images size :")
 print(predictions.shape)
-print(dataset.shape)
+
+#===== Convert the prediction arrays in corresponding images
+# get patches for visualization
+vis_patches_predictions = predictions[:patches_per_img * imgs_to_visualize]
+
+pred_patches = pred_to_imgs(vis_patches_predictions, patch_size[0], patch_size[1], "threshold")
+print(np.max(pred_patches))
+print(np.min(pred_patches))
+pred_imgs = recompone_overlap(pred_patches, full_img_height, full_img_width, stride_size[0], stride_size[1])
+
+# #========== Elaborate and visualize the predicted images ====================
+pred_imgs = pred_imgs[:, :, 0:full_img_height, 0:full_img_width] * 255
+# gtruth_masks = gtruth_masks[:,:,0:full_img_height,0:full_img_width]
+# print("Orig imgs shape: " +str(orig_imgs.shape))
+# print("pred imgs shape: " +str(pred_imgs.shape))
+# print("Gtruth imgs shape: " +str(gtruth_masks.shape))
+# visualize(group_images(orig_imgs,N_visual),path_experiment+"all_originals")#.show()
+visualize(group_images(pred_imgs,N_visual), experiment_path + "all_predictions")#.show()
+# visualize(group_images(gtruth_masks,N_visual),path_experiment+"all_groundTruths")#.show()
+# #visualize results comparing mask and prediction:
+# assert (orig_imgs.shape[0]==pred_imgs.shape[0] and orig_imgs.shape[0]==gtruth_masks.shape[0])
+# N_predicted = orig_imgs.shape[0]
+# group = N_visual
+# assert (N_predicted%group==0)
+# for i in range(int(N_predicted/group)):
+#     orig_stripe = group_images(orig_imgs[i*group:(i*group)+group,:,:,:],group)
+#     masks_stripe = group_images(gtruth_masks[i*group:(i*group)+group,:,:,:],group)
+#     pred_stripe = group_images(pred_imgs[i*group:(i*group)+group,:,:,:],group)
+#     total_img = np.concatenate((orig_stripe,masks_stripe,pred_stripe),axis=0)
+#     visualize(total_img,path_experiment+name_experiment +"_Original_GroundTruth_Prediction"+str(i))#.show()
 
 #========================== Evaluate the results ===================================
 print("\n\n========  Evaluate the results =======================")
@@ -116,13 +147,13 @@ print(session.run([recall, update_op_recall, precision, update_op_precision]))
 # plt.savefig(path_experiment+"Precision_recall.png")
 
 #Confusion matrix
-threshold_confusion = 0.5
-print("\nConfusion matrix:  Custom threshold (for positive) of " +str(threshold_confusion))
-tp, u_op_fn = tf.metrics.true_positives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
-tn, u_op_fn = tf.metrics.true_negatives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
-fp, u_op_fn = tf.metrics.false_positives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
-fn, u_op_fn = tf.metrics.false_negatives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
-print(session.run([tp, u_op_fn, ]))
+# threshold_confusion = 0.5
+# print("\nConfusion matrix:  Custom threshold (for positive) of " +str(threshold_confusion))
+# tp, u_op_fn = tf.metrics.true_positives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
+# tn, u_op_fn = tf.metrics.true_negatives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
+# fp, u_op_fn = tf.metrics.false_positives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
+# fn, u_op_fn = tf.metrics.false_negatives_at_thresholds(dataset, predicitons, [threshold_confusion, threshold_confusion])
+# print(session.run([tp, u_op_fn, ]))
 # confusion = np.array([[tp, fp], [tn, fn]])
 # print(confusion)
 # accuracy = 0
@@ -156,46 +187,3 @@ print(session.run([tp, u_op_fn, ]))
 #                 +"\nPRECISION: " +str(precision)
 #                 )
 # file_perf.close()
-
-# #===== Convert the prediction arrays in corresponding images
-# # TODO!!!!
-# pred_patches = pred_to_imgs(predictions, patch_height, patch_width, "threshold")
-
-
-# #========== Elaborate and visualize the predicted images ====================
-# pred_imgs = None
-# orig_imgs = None
-# gtruth_masks = None
-
-# ### TODO: batchwise recomponment
-# if average_mode == True:
-#     pred_imgs = recompone_overlap(pred_patches, new_height, new_width, stride_height, stride_width)# predictions
-#     orig_imgs = my_PreProc(test_imgs_orig[:20,:,:,:])    #originals
-#     gtruth_masks = masks_test  #ground truth masks
-# else:
-#     pred_imgs = recompone(pred_patches,13,12)       # predictions
-#     orig_imgs = recompone(patches_imgs_test,13,12)  # originals
-#     gtruth_masks = recompone(patches_masks_test,13,12)  #masks
-# # apply the DRIVE masks on the repdictions #set everything outside the FOV to zero!!
-# # kill_border(pred_imgs, test_border_masks)  #DRIVE MASK  #only for visualization
-# ## back to original dimensions
-# orig_imgs = orig_imgs[:,:,0:full_img_height,0:full_img_width]
-# pred_imgs = pred_imgs[:,:,0:full_img_height,0:full_img_width]
-# gtruth_masks = gtruth_masks[:,:,0:full_img_height,0:full_img_width]
-# print("Orig imgs shape: " +str(orig_imgs.shape))
-# print("pred imgs shape: " +str(pred_imgs.shape))
-# print("Gtruth imgs shape: " +str(gtruth_masks.shape))
-# visualize(group_images(orig_imgs,N_visual),path_experiment+"all_originals")#.show()
-# visualize(group_images(pred_imgs,N_visual),path_experiment+"all_predictions")#.show()
-# visualize(group_images(gtruth_masks,N_visual),path_experiment+"all_groundTruths")#.show()
-# #visualize results comparing mask and prediction:
-# assert (orig_imgs.shape[0]==pred_imgs.shape[0] and orig_imgs.shape[0]==gtruth_masks.shape[0])
-# N_predicted = orig_imgs.shape[0]
-# group = N_visual
-# assert (N_predicted%group==0)
-# for i in range(int(N_predicted/group)):
-#     orig_stripe = group_images(orig_imgs[i*group:(i*group)+group,:,:,:],group)
-#     masks_stripe = group_images(gtruth_masks[i*group:(i*group)+group,:,:,:],group)
-#     pred_stripe = group_images(pred_imgs[i*group:(i*group)+group,:,:,:],group)
-#     total_img = np.concatenate((orig_stripe,masks_stripe,pred_stripe),axis=0)
-#     visualize(total_img,path_experiment+name_experiment +"_Original_GroundTruth_Prediction"+str(i))#.show()

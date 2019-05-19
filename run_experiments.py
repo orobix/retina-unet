@@ -25,30 +25,33 @@ subimgs_per_img = subimgs_per_dim**2
 imgs_to_visualize = global_config.get('global', 'imgs_to_visualize')
 
 # first is train second test
-settings = [['DRIVE', 'DRIVE'], ['DRIVE', 'Synth'], ['Synth', 'DRIVE'], ['Synth', 'Synth']]
+settings = ['DRIVE', 'Synth']
 archs = ['unet'] #['unet','resnet']
 
 for arch in archs:
-  for setup in settings:
+  for trainset in settings:
     config = configparser.RawConfigParser()
     config.read('./configuration_template.txt')
     ### write config
-    experiment = setup[0] + '_' + setup[1] + '_experiment'
+    experiment = trainset + '_DRIVE_experiment'
     config.set('experiment', 'name', experiment)
     config.set('experiment', 'arch', arch)
 
-    #config.set('data paths', 'path_local', experiment)
-    config.set('data paths', 'train_data_path', './' + setup[0] + '_datasets/dataset__train*.tfrecord')
-    config.set('data paths', 'test_data_path', './' + setup[1] + '_datasets/dataset__test*.tfrecord')
+    config.set('data paths', 'train_data_path', './' + trainset + '_datasets/dataset__train*.tfrecord')
 
-    config.set('training settings', 'N_subimgs', eval(setup[0] + '_subimgs'))
-    config.set('testing settings', 'N_subimgs', eval(setup[1] + '_subimgs'))
-    config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
+    config.set('training settings', 'N_subimgs', eval(trainset + '_subimgs'))
 
-    with open('configuration.txt', "w") as f:
-      config.write(f)
+    ### run training
+    # os.system('python run_training.py')
+    
+    for testset in settings:
+      config.set('data paths', 'test_data_path', './' + testset + '_datasets/dataset__test*.tfrecord')
+      config.set('testing settings', 'N_subimgs', eval(testset + '_subimgs'))
+      config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
 
-    ### run experiment
-    os.system('python run_training.py')
-    # os.system('python run_testing.py')
+      with open('configuration.txt', "w") as f:
+        config.write(f)
+
+      os.system('python run_testing.py')
+      break
     break

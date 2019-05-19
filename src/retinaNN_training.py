@@ -63,10 +63,10 @@ patches_imgs_samples, patches_gts_samples = load_images_labels(
     batch_size,
     N_subimgs
 )
-patches_imgs_samples = patches_imgs_samples[0:20] * 85. + 127.5
+patches_imgs_samples = (patches_imgs_samples[0:20] + 3.) / 6. * 255.
 patches_gts_samples = tf.cast(patches_gts_samples[0:20] * 255., tf.float32)
 patches_gts_samples = tf.reshape(
-    patches_gts_samples,
+    patches_gts_samples[:, 1],
     (20, 1, patch_size[0], patch_size[1])
 )
 
