@@ -1,4 +1,5 @@
 import configparser
+import csv
 import tensorflow as tf
 import glob
 from tensorflow.io import decode_png
@@ -10,12 +11,6 @@ PATCH_SIZE = (
     int(config.get('data attributes', 'patch_height')),
     int(config.get('data attributes', 'patch_width'))
 )
-
-data_stats = configparser.RawConfigParser()
-data_stats.read(config.get('data paths', 'train_data_stats'))
-
-MEAN = data_stats.get('statistics', 'mean_images')
-STD = data_stats.get('statistics', 'std_images')
 
 def load_testset(filepath, batch_size):
     # This works with arrays as well
@@ -33,20 +28,23 @@ def load_trainset(filepath, batch_size, N_imgs, shuffle=True):
     dataset = tf.data.TFRecordDataset(glob.glob(filepath))
     
     # Set the number of datapoints you want to load and shuffle
+    # do not reshuffle each iteration
     if shuffle:
-        dataset = dataset.shuffle(N_imgs)
+        dataset = dataset.shuffle(N_imgs, None, False)
 
     # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
-    dataset = dataset.map(_parse_function, num_parallel_calls=8)
-    dataset = dataset.map(normalize, num_parallel_calls=8)
+    dataset = dataset.map(_parse_function, num_parallel_calls=8) \
+        .map(normalize, num_parallel_calls=8)
 
     #split in testing and training
     test_data = dataset.take(int(N_imgs / 10)) \
         .batch(batch_size, drop_remainder=True) \
         .repeat()
+
     train_data = dataset.skip(int(N_imgs / 10)) \
         .batch(batch_size, drop_remainder=True) \
         .repeat()
+
     return test_data, train_data
 
 
@@ -66,9 +64,12 @@ def load_images_labels(filepath, batch_size, N_imgs, shuffle=True):
 
 # ================================ HELPER =======================================
 def normalize(image, label):
-    global MEAN, STD
-    image = (tf.cast(image, tf.float32) - MEAN) / STD * 3.    # normalize to [-3, 3]
+    image = (tf.cast(image, tf.float32) - 127.5) / 255. * 6.    # normalize to [-3, 3]
     label = tf.cast(label, tf.float32) / 255.         # label from 0 - 1
+    assert(tf.min(image)>= -3.)
+    assert(tf.max(image)<= 3.)
+    assert(tf.min(label)>= 0.)
+    assert(tf.max(label)>= 1.)
     return image, label
 
 def _parse_function(proto):

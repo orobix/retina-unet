@@ -17,6 +17,7 @@ from tensorflow.python.keras.callbacks import TensorBoard
 
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.utils import plot_model as plot
+from tensorflow.python.ops import math_ops
 import tensorflow.keras.backend as K
 
 import sys
@@ -32,10 +33,12 @@ def weighted_cross_entropy(weight):
         return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, weight)
     return loss
 
+# output of the net is between -1 and 1
+# labels are between 0 and 1
 def accuracy(y_true, y_pred):
     y = tf.cast(y_true > 0, y_true.dtype)
-    y_ = tf.cast(y_pred > 0, y_pred.dtype)
-    return 1.0 - tf.mean(y - y_)
+    y_ = tf.cast(y_pred > 0.5, y_pred.dtype)
+    return 1.0 - K.mean(math_ops.equal(y - y_))
 
 #========= Load settings from Config file =====================================
 
@@ -67,11 +70,10 @@ patch_size = (
 patches_imgs_samples, patches_gts_samples = load_images_labels(
     train_path,
     batch_size,
-    N_subimgs,
-    data_stats.get('statistics', 'mean_images'),
-    data_stats.get('statistics', 'std_images')
+    N_subimgs
 )
-patches_imgs_samples = patches_imgs_samples[0:20] * 85. + 127.5
+
+patches_imgs_samples = patches_imgs_samples[0:20] / 6. + 0.5 * 255.
 patches_gts_samples = tf.cast(patches_gts_samples[0:20] * 255., tf.float32)
 patches_gts_samples = tf.reshape(
     patches_gts_samples,
@@ -98,8 +100,8 @@ else:
 
 model.compile(
     optimizer = 'sgd',
-    loss = weighted_cross_entropy(8.9),
-    metrics = ['binary_accuracy', accuracy]
+    loss = weighted_cross_entropy(0.9 / 0.1),
+    metrics = [accuracy, tf.keras.metrics.FalseNegatives(), tf.keras.metrics.FalsePositives()]
 )
 
 print("Check: final output of the network:")
@@ -125,23 +127,6 @@ tensorboard = TensorBoard(
     embedding_layer_names = ['input', 'output']
     embedding_data = patches_imgs_samples
 )
-
-# train_x, train_y = train_dataset.make_one_shot_iterator().get_next()
-# size = int(batch_size * 30)
-# train_x = tf.tile(tf.reshape(train_x[0], [1, 1, 48, 48]), [size, 1, 1, 1])
-# train_y = tf.tile(tf.reshape(train_y[0], [1, 1, 2304]), [size, 1, 1])
-
-# train_x, train_y = session.run([train_x, train_y])
-
-# model.fit(
-#     train_x,
-#     train_y,
-#     epochs = N_epochs,
-#     batch_size = batch_size,
-#     verbose = 2,
-#     validation_split= 0.1,
-#     callbacks = [checkpointer, tensorboard])
-
 
 model.fit(
     train_dataset,
