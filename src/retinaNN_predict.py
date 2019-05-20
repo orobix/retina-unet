@@ -104,7 +104,7 @@ pred_imgs = pred_imgs[:, :, 0:full_img_height, 0:full_img_width] * 255
 # print("pred imgs shape: " +str(pred_imgs.shape))
 # print("Gtruth imgs shape: " +str(gtruth_masks.shape))
 # visualize(group_images(orig_imgs,N_visual),path_experiment+"all_originals")#.show()
-visualize(group_images(pred_imgs,N_visual), experiment_path + "all_predictions")#.show()
+visualize(group_images(pred_imgs,5), experiment_path + "/all_predictions")#.show()
 # visualize(group_images(gtruth_masks,N_visual),path_experiment+"all_groundTruths")#.show()
 # #visualize results comparing mask and prediction:
 # assert (orig_imgs.shape[0]==pred_imgs.shape[0] and orig_imgs.shape[0]==gtruth_masks.shape[0])
