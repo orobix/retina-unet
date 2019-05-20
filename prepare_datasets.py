@@ -62,8 +62,16 @@ def get_datasets(
     fileCounter = 0
     writer = tf.python_io.TFRecordWriter(get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
 
+    std_img = 0.0
+    mean_img = 0.0
+    std_gt = 0.0
+    mean_gt = 0.0
+    new_image_size = (0., 0.)
+    n_subimgs = 0
+
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
-        for i in range(len(files)):
+        n_imgs = len(files)
+        for i in range(n_imgs):
             #original
             img = np.asarray(Image.open(imgs_dir + files[i]).convert('L'))
             g_truth = np.asarray(Image.open(groundTruth_dir + files[i]).convert('L'))
@@ -81,11 +89,16 @@ def get_datasets(
 
             # extract patches
             img = my_PreProc(img)
-            img_data = extract_ordered_overlap(img, patch_size, stride_size)
+            img_data, new_image_size, n_subimgs = extract_ordered_overlap(img, patch_size, stride_size)
             img_data = np.transpose(img_data, (0, 2, 3, 1)).astype(np.uint8)
             # preprocess img
-            gt_data = extract_ordered_overlap(g_truth, patch_size, stride_size)
+            gt_data, _, _ = extract_ordered_overlap(g_truth, patch_size, stride_size)
             gt_data = np.transpose(gt_data, (0, 2, 3, 1)).astype(np.uint8)
+
+            mean_img += np.mean(img_data) / n_imgs
+            mean_gt += np.mean(gt_data) / n_imgs
+            std_img += np.var(img_data) / n_imgs
+            std_gt += np.var(img_data) / n_imgs
 
             for j in range(img_data.shape[0]):
                 encoded_img_string = cv2.imencode('.png', img_data[j])[1].tostring()
@@ -105,6 +118,17 @@ def get_datasets(
                 fileCounter += 1
                 print('create new writer: ' + get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
                 writer = tf.python_io.TFRecordWriter(get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
+
+    with open(dataset_path + 'stats_' + train_test + '.txt', 'rw') as f:
+        f.write('[statistics]')
+        f.write('mean_images = ' + str(mean_img))
+        f.write('mean_groundtruths = ' + str(mean_gt))
+        f.write('std_images = ' + str(np.sqrt(std_img)))
+        f.write('std_groundtruths = ' + str(np.sqrt(std_gt)))
+        f.write('')
+        f.write('new_image_height = ' + str(new_image_size[0]))
+        f.write('new_image_width = ' + str(new_image_size[1]))
+        f.write('subimages_per_image = ' + str(n_subimgs))
     writer.close()
 
 def prepare_dataset(configuration):

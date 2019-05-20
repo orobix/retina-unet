@@ -39,7 +39,9 @@ for arch in archs:
 
     #config.set('data paths', 'path_local', experiment)
     config.set('data paths', 'train_data_path', './' + setup[0] + '_datasets/dataset__train*.tfrecord')
+    config.set('data paths', 'train_data_stats', './' + setup[0] + '_datasets/stats_train.txt')
     config.set('data paths', 'test_data_path', './' + setup[1] + '_datasets/dataset__test*.tfrecord')
+    config.set('data paths', 'test_data_stats', './' + setup[1] + '_datasets/stats_test.txt')
 
     config.set('training settings', 'N_subimgs', eval(setup[0] + '_subimgs'))
     config.set('testing settings', 'N_subimgs', eval(setup[1] + '_subimgs'))

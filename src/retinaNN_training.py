@@ -32,7 +32,13 @@ def weighted_cross_entropy(weight):
         return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, weight)
     return loss
 
+def accuracy(y_true, y_pred):
+    y = tf.cast(y_true > 0, y_true.dtype)
+    y_ = tf.cast(y_pred > 0, y_pred.dtype)
+    return 1.0 - tf.mean(y - y_)
+
 #========= Load settings from Config file =====================================
+
 config = configparser.RawConfigParser()
 config.read('configuration.txt')
 
@@ -61,7 +67,9 @@ patch_size = (
 patches_imgs_samples, patches_gts_samples = load_images_labels(
     train_path,
     batch_size,
-    N_subimgs
+    N_subimgs,
+    data_stats.get('statistics', 'mean_images'),
+    data_stats.get('statistics', 'std_images')
 )
 patches_imgs_samples = patches_imgs_samples[0:20] * 85. + 127.5
 patches_gts_samples = tf.cast(patches_gts_samples[0:20] * 255., tf.float32)
@@ -81,11 +89,6 @@ test_dataset, train_dataset = load_trainset(
     batch_size,
     N_subimgs
 )
-_, labels = train_dataset.make_one_shot_iterator().get_next()
-
-gt_mean = tf.math.reduce_mean(labels)
-gt_mean = session.run(gt_mean)
-LOSS_WEIGHT = (1. - gt_mean) / gt_mean
 
 #=========== Construct and save the model arcitecture ===========================
 if u_net:
@@ -94,10 +97,9 @@ else:
     model = get_resnet()
 
 model.compile(
-    optimizer = 'adam',
-    # loss = weighted_cross_entropy(LOSS_WEIGHT),
-    loss = 'mse',
-    metrics = ['accuracy']
+    optimizer = 'sgd',
+    loss = weighted_cross_entropy(8.9),
+    metrics = ['binary_accuracy', accuracy]
 )
 
 print("Check: final output of the network:")
@@ -117,36 +119,38 @@ checkpointer = ModelCheckpoint(
 
 tensorboard = TensorBoard(
     log_dir = experiment_path + '/logs/{}'.format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')),
-    #write_images = True,
     batch_size = batch_size,
-    histogram_freq = 5,
+    histogram_freq = 1,
+    embedding_freq = 1,
+    embedding_layer_names = ['input', 'output']
+    embedding_data = patches_imgs_samples
 )
 
-train_x, train_y = train_dataset.make_one_shot_iterator().get_next()
-size = int(batch_size * 30)
-train_x = tf.tile(tf.reshape(train_x[0], [1, 1, 48, 48]), [size, 1, 1, 1])
-train_y = tf.tile(tf.reshape(train_y[0], [1, 1, 2304]), [size, 1, 1])
+# train_x, train_y = train_dataset.make_one_shot_iterator().get_next()
+# size = int(batch_size * 30)
+# train_x = tf.tile(tf.reshape(train_x[0], [1, 1, 48, 48]), [size, 1, 1, 1])
+# train_y = tf.tile(tf.reshape(train_y[0], [1, 1, 2304]), [size, 1, 1])
 
-train_x, train_y = session.run([train_x, train_y])
-
-model.fit(
-    train_x,
-    train_y,
-    epochs = N_epochs,
-    batch_size = batch_size,
-    verbose = 2,
-    validation_split= 0.1,
-    callbacks = [checkpointer, tensorboard])
-
+# train_x, train_y = session.run([train_x, train_y])
 
 # model.fit(
-#     train_dataset,
+#     train_x,
+#     train_y,
 #     epochs = N_epochs,
-#     steps_per_epoch = int(N_subimgs / batch_size),
-#     validation_data = test_dataset,
-#     validation_steps = int(10),
+#     batch_size = batch_size,
 #     verbose = 2,
+#     validation_split= 0.1,
 #     callbacks = [checkpointer, tensorboard])
+
+
+model.fit(
+    train_dataset,
+    epochs = N_epochs,
+    steps_per_epoch = int(N_subimgs / batch_size),
+    validation_data = test_dataset,
+    validation_steps = int(10),
+    verbose = 1,
+    callbacks = [checkpointer, tensorboard])
 
 #========== Save and test the last model ==================================
 model.save_weights(experiment_path + '/' + name_experiment +'_last_weights.h5', overwrite=True)

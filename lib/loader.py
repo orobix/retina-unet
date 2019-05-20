@@ -11,6 +11,12 @@ PATCH_SIZE = (
     int(config.get('data attributes', 'patch_width'))
 )
 
+data_stats = configparser.RawConfigParser()
+data_stats.read(config.get('data paths', 'train_data_stats'))
+
+MEAN = data_stats.get('statistics', 'mean_images')
+STD = data_stats.get('statistics', 'std_images')
+
 def load_testset(filepath, batch_size):
     # This works with arrays as well
     dataset = tf.data.TFRecordDataset(glob.glob(filepath))
@@ -60,12 +66,13 @@ def load_images_labels(filepath, batch_size, N_imgs, shuffle=True):
 
 # ================================ HELPER =======================================
 def normalize(image, label):
-    # image = (image - MEAN) / STD
-    image = (tf.cast(image, tf.float32) - 127.5) / (255. / 3.)    # normalize to [-3, 3]
+    global MEAN, STD
+    image = (tf.cast(image, tf.float32) - MEAN) / STD * 3.    # normalize to [-3, 3]
     label = tf.cast(label, tf.float32) / 255.         # label from 0 - 1
     return image, label
 
 def _parse_function(proto):
+    global PATCH_SIZE
     # define your tfrecord again. Remember that you saved your image as a string.
     keys_to_features = {'image': tf.FixedLenFeature([], tf.string),
                         'label': tf.FixedLenFeature([], tf.string)}

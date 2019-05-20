@@ -56,7 +56,8 @@ def _extract_patches(full_imgs, patch_size, stride_size, overlap):
         patches[i * patches_per_img : (i + 1) * patches_per_img] = patches_of_img.reshape(N_patches_tot, 1, patch_size[0], patch_size[1])
         iter_tot += patches_per_img
     assert (iter_tot == N_patches_tot)
-    return patches  #array with all the full_imgs divided in patches
+    image_size = (img_h + pad_by[0], img_w + pad_by[1])
+    return patches, image_size, patches.shape[0]  #array with all the full_imgs divided in patches
 
 def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     assert (len(preds.shape)==4)  #4D arrays
