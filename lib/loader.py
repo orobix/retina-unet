@@ -65,15 +65,20 @@ def load_images_labels(filepath, batch_size, N_imgs, shuffle=True):
 
 # ================================ HELPER =======================================
 def normalize(image, label):
-    image = (tf.cast(image, tf.float32) - 127.5) / 255. * 6.    # normalize to [-3, 3]
+    image = tf.cast(image, tf.float32) / 255. * 6. - 3.    # normalize to [-3, 3]
     label = tf.cast(label, tf.float32) / 255.         # label from 0 - 1
 
-    # min, max = K.get_session().run([tf.reduce_min(label), tf.reduce_max(label)])
-    # assert(min >= -3.)
-    # assert(max <= 3.)
-    # assert(tf.math.reduce_min(label)>= 0.)
-    # assert(tf.math.reduce_max(label)>= 1.)
-    return image, label
+    assert_max_label = tf.Assert(tf.less_equal(tf.reduce_max(label), 1.), [label])
+    assert_max_image = tf.Assert(tf.less_equal(tf.reduce_max(image), 3.), [image])
+    assert_min_label = tf.Assert(tf.greater_equal(tf.reduce_min(label), 0.), [label])
+    assert_min_image = tf.Assert(tf.greater_equal(tf.reduce_min(image), -3.), [image])
+    with tf.control_dependencies([
+        assert_max_label,
+        assert_max_image,
+        assert_min_label,
+        assert_min_image
+    ]):
+        return image, label
 
 def _parse_function(proto):
     global PATCH_SIZE

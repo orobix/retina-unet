@@ -23,22 +23,11 @@ import tensorflow.keras.backend as K
 import sys
 sys.path.insert(0, './lib/')
 from help_functions import *
+from nn_utils import *
 from loader import load_trainset, load_images_labels
 from unet import get_unet
 
 session = K.get_session()
-
-def weighted_cross_entropy(weight):
-    def loss(y_true, y_pred):
-        return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, weight)
-    return loss
-
-# output of the net is between -1 and 1
-# labels are between 0 and 1
-def accuracy(y_true, y_pred):
-    y = tf.cast(y_true > 0, y_true.dtype)
-    y_ = tf.cast(y_pred > 0.5, y_pred.dtype)
-    return K.mean(math_ops.equal(y, y_))
 
 #========= Load settings from Config file =====================================
 
@@ -68,26 +57,15 @@ patch_size = (
 
 #========= Save a sample of what you're feeding to the neural network ==========
 patches_imgs_samples, patches_gts_samples = load_images_labels(
-    train_path,
-    batch_size,
-    N_subimgs
-)
+        train_path,
+        batch_size,
+        N_subimgs
+    )
 
 patches_embedding = patches_imgs_samples[:32]
 patches_embedding = session.run([patches_embedding])
 
-patches_imgs_samples = patches_imgs_samples[0:20] / 6. + 0.5 * 255.
-patches_gts_samples = tf.cast(patches_gts_samples[0:20] * 255., tf.float32)
-patches_gts_samples = tf.reshape(
-    patches_gts_samples,
-    (20, 1, patch_size[0], patch_size[1])
-)
-
-
-imgs_samples = session.run(
-    tf.concat([patches_imgs_samples, patches_gts_samples], 0)
-)
-visualize(group_images(imgs_samples, 5), experiment_path + '/' + "sample_input")
+visualize_samples(session, experiment_path, patches_imgs_samples, patches_gts_samples, patch_size)
 
 #============ Load the data and normalize =======================================
 test_dataset, train_dataset = load_trainset(
@@ -116,6 +94,7 @@ json_string = model.to_json()
 open(experiment_path + '/' + name_experiment +'_architecture.json', 'w').write(json_string)
 
 #============  Training ========================================================
+logdir = experiment_path + '/logs/{}'.format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S'))
 checkpointer = ModelCheckpoint(
     filepath = experiment_path + '/' + name_experiment +'_best_weights.h5',
     verbose = 1,
@@ -124,14 +103,18 @@ checkpointer = ModelCheckpoint(
     save_best_only = True) #save at each epoch if the validation decreased
 
 tensorboard = TensorBoard(
-    log_dir = experiment_path + '/logs/{}'.format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')),
+    log_dir = logdir,
     batch_size = batch_size,
-    histogram_freq = 1,
-    write_images = True,
-    # embeddings_freq = 1,
-    # embeddings_layer_names = ['input'],
-    # embeddings_metadata = 'metadata.tsv',
-    # embeddings_data = patches_embedding
+    histogram_freq = 5
+)
+
+outputCallback = TensorBoardOutputCallback(
+    'images',
+    logdir,
+    patches_embedding,
+    batch_size,
+    patch_size,
+    freq = 5
 )
 
 model.fit(
@@ -142,7 +125,7 @@ model.fit(
     validation_data = test_dataset,
     validation_steps = int(10),
     verbose = 2,
-    callbacks = [checkpointer, tensorboard])
+    callbacks = [checkpointer, tensorboard, outputCallback])
 
 #========== Save and test the last model ==================================
 model.save_weights(experiment_path + '/' + name_experiment +'_last_weights.h5', overwrite=True)
