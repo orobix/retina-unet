@@ -3,6 +3,7 @@ import csv
 import tensorflow as tf
 import glob
 from tensorflow.io import decode_png
+import tensorflow.keras.backend as K
 
 config = configparser.RawConfigParser()
 config.read('configuration.txt')
@@ -66,10 +67,12 @@ def load_images_labels(filepath, batch_size, N_imgs, shuffle=True):
 def normalize(image, label):
     image = (tf.cast(image, tf.float32) - 127.5) / 255. * 6.    # normalize to [-3, 3]
     label = tf.cast(label, tf.float32) / 255.         # label from 0 - 1
-    assert(tf.min(image)>= -3.)
-    assert(tf.max(image)<= 3.)
-    assert(tf.min(label)>= 0.)
-    assert(tf.max(label)>= 1.)
+
+    # min, max = K.get_session().run([tf.reduce_min(label), tf.reduce_max(label)])
+    # assert(min >= -3.)
+    # assert(max <= 3.)
+    # assert(tf.math.reduce_min(label)>= 0.)
+    # assert(tf.math.reduce_max(label)>= 1.)
     return image, label
 
 def _parse_function(proto):

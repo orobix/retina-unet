@@ -38,7 +38,7 @@ def weighted_cross_entropy(weight):
 def accuracy(y_true, y_pred):
     y = tf.cast(y_true > 0, y_true.dtype)
     y_ = tf.cast(y_pred > 0.5, y_pred.dtype)
-    return 1.0 - K.mean(math_ops.equal(y - y_))
+    return K.mean(math_ops.equal(y, y_))
 
 #========= Load settings from Config file =====================================
 
@@ -73,12 +73,16 @@ patches_imgs_samples, patches_gts_samples = load_images_labels(
     N_subimgs
 )
 
+patches_embedding = patches_imgs_samples[:32]
+patches_embedding = session.run([patches_embedding])
+
 patches_imgs_samples = patches_imgs_samples[0:20] / 6. + 0.5 * 255.
 patches_gts_samples = tf.cast(patches_gts_samples[0:20] * 255., tf.float32)
 patches_gts_samples = tf.reshape(
     patches_gts_samples,
     (20, 1, patch_size[0], patch_size[1])
 )
+
 
 imgs_samples = session.run(
     tf.concat([patches_imgs_samples, patches_gts_samples], 0)
@@ -101,7 +105,7 @@ else:
 model.compile(
     optimizer = 'sgd',
     loss = weighted_cross_entropy(0.9 / 0.1),
-    metrics = [accuracy, tf.keras.metrics.FalseNegatives(), tf.keras.metrics.FalsePositives()]
+    metrics = [accuracy]
 )
 
 print("Check: final output of the network:")
@@ -123,18 +127,21 @@ tensorboard = TensorBoard(
     log_dir = experiment_path + '/logs/{}'.format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')),
     batch_size = batch_size,
     histogram_freq = 1,
-    embedding_freq = 1,
-    embedding_layer_names = ['input', 'output']
-    embedding_data = patches_imgs_samples
+    write_images = True,
+    # embeddings_freq = 1,
+    # embeddings_layer_names = ['input'],
+    # embeddings_metadata = 'metadata.tsv',
+    # embeddings_data = patches_embedding
 )
 
 model.fit(
     train_dataset,
     epochs = N_epochs,
     steps_per_epoch = int(N_subimgs / batch_size),
+    # steps_per_epoch = 1,
     validation_data = test_dataset,
     validation_steps = int(10),
-    verbose = 1,
+    verbose = 2,
     callbacks = [checkpointer, tensorboard])
 
 #========== Save and test the last model ==================================
