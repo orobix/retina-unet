@@ -17,22 +17,20 @@ from tensorflow.python.keras.callbacks import TensorBoard
 
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.utils import plot_model as plot
+from tensorflow.python.ops import math_ops
 import tensorflow.keras.backend as K
 
 import sys
 sys.path.insert(0, './lib/')
 from help_functions import *
+from nn_utils import *
 from loader import load_trainset, load_images_labels
 from unet import get_unet
 
 session = K.get_session()
 
-def weighted_cross_entropy(weight):
-    def loss(y_true, y_pred):
-        return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, weight)
-    return loss
-
 #========= Load settings from Config file =====================================
+
 config = configparser.RawConfigParser()
 config.read('configuration.txt')
 
@@ -59,21 +57,15 @@ patch_size = (
 
 #========= Save a sample of what you're feeding to the neural network ==========
 patches_imgs_samples, patches_gts_samples = load_images_labels(
-    train_path,
-    batch_size,
-    N_subimgs
-)
-patches_imgs_samples = (patches_imgs_samples[0:20] + 3.) / 6. * 255.
-patches_gts_samples = tf.cast(patches_gts_samples[0:20] * 255., tf.float32)
-patches_gts_samples = tf.reshape(
-    patches_gts_samples[:, 1],
-    (20, 1, patch_size[0], patch_size[1])
-)
+        train_path,
+        batch_size,
+        N_subimgs
+    )
 
-imgs_samples = session.run(
-    tf.concat([patches_imgs_samples, patches_gts_samples], 0)
-)
-visualize(group_images(imgs_samples, 5), experiment_path + '/' + "sample_input")
+patches_embedding = patches_imgs_samples[:32]
+patches_embedding = session.run([patches_embedding])
+
+visualize_samples(session, experiment_path, patches_imgs_samples, patches_gts_samples, patch_size)
 
 #============ Load the data and normalize =======================================
 test_dataset, train_dataset = load_trainset(
@@ -81,11 +73,6 @@ test_dataset, train_dataset = load_trainset(
     batch_size,
     N_subimgs
 )
-# _, labels = train_dataset.make_one_shot_iterator().get_next()
-
-# gt_mean = tf.math.reduce_mean(labels)
-# gt_mean = session.run(gt_mean)
-# LOSS_WEIGHT = (1. - gt_mean) / gt_mean
 
 #=========== Construct and save the model arcitecture ===========================
 if u_net:
@@ -94,7 +81,7 @@ else:
     model = get_resnet()
 
 model.compile(
-    optimizer = 'adam',
+    optimizer = 'sgd',
     # loss = weighted_cross_entropy(LOSS_WEIGHT),
     loss = 'categorical_crossentropy',
     metrics = ['accuracy']
@@ -108,6 +95,7 @@ json_string = model.to_json()
 open(experiment_path + '/' + name_experiment +'_architecture.json', 'w').write(json_string)
 
 #============  Training ========================================================
+logdir = experiment_path + '/logs/{}'.format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S'))
 checkpointer = ModelCheckpoint(
     filepath = experiment_path + '/' + name_experiment +'_best_weights.h5',
     verbose = 1,
@@ -116,27 +104,28 @@ checkpointer = ModelCheckpoint(
     save_best_only = True) #save at each epoch if the validation decreased
 
 tensorboard = TensorBoard(
-    log_dir = experiment_path + '/logs/{}'.format(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')),
-    #write_images = True,
+    log_dir = logdir,
     batch_size = batch_size,
-    histogram_freq = 5,
+    histogram_freq = 5
+)
+outputCallback = TensorBoardOutputCallback(
+    'images',
+    logdir,
+    patches_embedding,
+    batch_size,
+    patch_size,
+    freq = 5
 )
 
-# train_x, train_y = train_dataset.make_one_shot_iterator().get_next()
-# size = int(batch_size * 30)
-# train_x = tf.tile(tf.reshape(train_x[0], [1, 1, 48, 48]), [size, 1, 1, 1])
-# train_y = tf.tile(tf.reshape(train_y[0], [1, 1, 2304]), [size, 1, 1])
-
-# train_x, train_y = session.run([train_x, train_y])
-
-# model.fit(
-#     train_x,
-#     train_y,
-#     epochs = N_epochs,
-#     batch_size = batch_size,
-#     verbose = 2,
-#     validation_split= 0.1,
-#     callbacks = [checkpointer, tensorboard])
+model.fit(
+    train_dataset,
+    epochs = N_epochs,
+    steps_per_epoch = int(N_subimgs / batch_size),
+    # steps_per_epoch = 1,
+    validation_data = test_dataset,
+    validation_steps = int(10),
+    verbose = 2,
+    callbacks = [checkpointer, tensorboard, outputCallback])
 
 
 model.fit(

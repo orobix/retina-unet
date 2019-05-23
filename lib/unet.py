@@ -3,8 +3,8 @@ from tensorflow.keras.models import Model
 
 
 def get_unet(n_ch, batch_size, patch_height, patch_width):
-    inputs = Input(batch_shape=(batch_size, n_ch, patch_height, patch_width))
-    conv1 = Conv2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', name="input")(inputs)
+    inputs = Input(batch_shape=(batch_size, n_ch, patch_height, patch_width), name="input")
+    conv1 = Conv2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first')(inputs)
     conv1 = Dropout(0.2)(conv1)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first')(conv1)
     pool1 = MaxPooling2D((2, 2))(conv1)

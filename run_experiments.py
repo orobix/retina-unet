@@ -36,8 +36,9 @@ for arch in archs:
     experiment = trainset + '_DRIVE_experiment'
     config.set('experiment', 'name', experiment)
     config.set('experiment', 'arch', arch)
-
-    config.set('data paths', 'train_data_path', './' + trainset + '_datasets/dataset__train*.tfrecord')
+    
+    config.set('data paths', 'train_data_path', './' + setup[0] + '_datasets/dataset__train*.tfrecord')
+    config.set('data paths', 'train_data_stats', './' + setup[0] + '_datasets/stats_train.txt')
 
     config.set('training settings', 'N_subimgs', eval(trainset + '_subimgs'))
 
@@ -45,7 +46,8 @@ for arch in archs:
     # os.system('python run_training.py')
     
     for testset in settings:
-      config.set('data paths', 'test_data_path', './' + testset + '_datasets/dataset__test*.tfrecord')
+      config.set('data paths', 'test_data_path', './' + setup[1] + '_datasets/dataset__test*.tfrecord')
+      config.set('data paths', 'test_data_stats', './' + setup[1] + '_datasets/stats_test.txt')
       config.set('testing settings', 'N_subimgs', eval(testset + '_subimgs'))
       config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
 

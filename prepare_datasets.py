@@ -62,8 +62,12 @@ def get_datasets(
     fileCounter = 0
     writer = tf.python_io.TFRecordWriter(get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
 
+    new_image_size = (0., 0.)
+    n_subimgs = 0
+
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
-        for i in range(len(files)):
+        n_imgs = len(files)
+        for i in range(n_imgs):
             #original
             img = np.asarray(Image.open(imgs_dir + files[i]).convert('L'))
             g_truth = np.asarray(Image.open(groundTruth_dir + files[i]).convert('L'))
@@ -81,10 +85,10 @@ def get_datasets(
 
             # extract patches
             img = my_PreProc(img)
-            img_data = extract_ordered_overlap(img, patch_size, stride_size)
+            img_data, new_image_size, n_subimgs = extract_ordered_overlap(img, patch_size, stride_size)
             img_data = np.transpose(img_data, (0, 2, 3, 1)).astype(np.uint8)
             # preprocess img
-            gt_data = extract_ordered_overlap(g_truth, patch_size, stride_size)
+            gt_data, _, _ = extract_ordered_overlap(g_truth, patch_size, stride_size)
             gt_data = np.transpose(gt_data, (0, 2, 3, 1)).astype(np.uint8)
 
             for j in range(img_data.shape[0]):
@@ -105,6 +109,12 @@ def get_datasets(
                 fileCounter += 1
                 print('create new writer: ' + get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
                 writer = tf.python_io.TFRecordWriter(get_filename_tfrecord(dataset_path, '', train_test, fileCounter))
+
+    with open(dataset_path + 'stats_' + train_test + '.csv', 'w') as f:
+        f.write('[statistics]')
+        f.write('new_image_height = ' + str(new_image_size[0]))
+        f.write('new_image_width = ' + str(new_image_size[1]))
+        f.write('subimages_per_image = ' + str(n_subimgs))
     writer.close()
 
 def prepare_dataset(configuration):
@@ -123,7 +133,7 @@ def prepare_dataset(configuration):
         configuration['borderMasks_imgs_test'],
         "test"
     )
-    print ("test data done!")
+    print("test data done!")
 
     #getting the training datasets
     get_datasets(
