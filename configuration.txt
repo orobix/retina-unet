@@ -7,7 +7,7 @@ test_data_stats = ./DRIVE_datasets/stats_test.txt
 
 [experiment]
 name = DRIVE_DRIVE_experiment
-arch = unet
+arch = resnet
 
 [data attributes]
 patch_height = 48

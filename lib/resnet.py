@@ -1,4 +1,6 @@
-#==================Define Network==============================================
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate, Activation
+from tensorflow.keras.models import Model
+
 #============Build U-Net Model=================
 def handle_block_names(stage):
     conv_name = 'decoder_stage{}_conv'.format(stage)
@@ -277,7 +279,7 @@ class ResnetBuilder(object):
 def UResNet34(input_shape=(None, None, 3), classes=1, decoder_filters=16, decoder_block_type='upsampling',
                        encoder_weights=None, input_tensor=None, activation='sigmoid', **kwargs):
 
-    backbone = ResnetBuilder.build_resnet_34(input_shape=input_shape,input_tensor=input_tensor)
+    backbone = ResnetBuilder.build_resnet_34(input_shape=input_shape, input_tensor=input_tensor)
     
     skip_connections = list([97,54,25])  # for resnet 34
     #print("sc done")

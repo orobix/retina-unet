@@ -26,7 +26,7 @@ imgs_to_visualize = global_config.get('global', 'imgs_to_visualize')
 
 # first is train second test
 settings = ['DRIVE', 'Synth']
-archs = ['unet'] #['unet','resnet']
+archs = ['resnet'] #['unet','resnet']
 
 for arch in archs:
   for trainset in settings:
@@ -37,23 +37,23 @@ for arch in archs:
     config.set('experiment', 'name', experiment)
     config.set('experiment', 'arch', arch)
     
-    config.set('data paths', 'train_data_path', './' + setup[0] + '_datasets/dataset__train*.tfrecord')
-    config.set('data paths', 'train_data_stats', './' + setup[0] + '_datasets/stats_train.txt')
+    config.set('data paths', 'train_data_path', './' + trainset + '_datasets/dataset__train*.tfrecord')
+    config.set('data paths', 'train_data_stats', './' + trainset + '_datasets/stats_train.txt')
 
     config.set('training settings', 'N_subimgs', eval(trainset + '_subimgs'))
 
     ### run training
-    # os.system('python run_training.py')
+    os.system('python run_training.py')
     
-    for testset in settings:
-      config.set('data paths', 'test_data_path', './' + setup[1] + '_datasets/dataset__test*.tfrecord')
-      config.set('data paths', 'test_data_stats', './' + setup[1] + '_datasets/stats_test.txt')
-      config.set('testing settings', 'N_subimgs', eval(testset + '_subimgs'))
-      config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
+    # for testset in settings:
+    #   config.set('data paths', 'test_data_path', './' + testset + '_datasets/dataset__test*.tfrecord')
+    #   config.set('data paths', 'test_data_stats', './' + testset + '_datasets/stats_test.txt')
+    #   config.set('testing settings', 'N_subimgs', eval(testset + '_subimgs'))
+    #   config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
 
-      with open('configuration.txt', "w") as f:
-        config.write(f)
+    #   with open('configuration.txt', "w") as f:
+    #     config.write(f)
 
-      os.system('python run_testing.py')
-      break
+    #   os.system('python run_testing.py')
+    #   break
     break
