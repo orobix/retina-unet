@@ -1,0 +1,8 @@
+[statistics]
+new_image_height = 466.6
+new_image_width = 466.6
+subimages_per_image = 10816
+mean_images = 107.94121198484883
+std_images = 52.51601979349872
+mean_groundtruths = 25.70814460187582
+std_groundtruths = 72.14582547263399
