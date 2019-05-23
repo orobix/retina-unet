@@ -78,7 +78,7 @@ test_dataset, train_dataset = load_trainset(
 if u_net:
     model = get_unet(1, batch_size, patch_size[0], patch_size[1])  #the U-net model
 else:
-    model = get_resnet()
+    model = UResNet34(input_shape=(1, patch_size[0], patch_size[1]))
 
 model.compile(
     optimizer = 'sgd',

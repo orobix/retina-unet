@@ -146,9 +146,8 @@ def get_datasets(
     borderMasks_dir,
     train_test="null"
 ):
-    global mean_img, var_img, mean_gt, var_gt, writer, new_img_size, n_subimgs, PROCESSES, pool
+    global mean_img, var_img, mean_gt, var_gt, writer, new_img_size, n_subimgs, PROCESSES
     
-    pool = Pool(processes = PROCESSES, maxtasksperchild=500)
     writer = Writer(dataset_path, '', train_test, 105 * 105 * 20)
     new_img_size = (0., 0.)
     n_subimgs = 0
@@ -175,16 +174,21 @@ def get_datasets(
         new_img_size = new_image_size
         for data in payload:
             writer.write(data)
-        arguments = None
 
-    processes = []
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
-        for i in range(len(files)):
-            r = pool.apply_async(process_img, [i, files[i], imgs_dir, groundTruth_dir], callback=myCallback)
-            processes.append(r)
-
-    for r in processes:
-        r.wait()
+        batch_size = 1000
+        batches = int(np.ceil(len(files) / batch_size))
+        for i in range(batches):
+            processes = []
+            pool = Pool(processes = PROCESSES)
+            fr = i * 1000
+            to = min(i * 1000 + batch_size, len(files))
+            for j in range(fr, to):
+                r = pool.apply_async(process_img, [j, files[j], imgs_dir, groundTruth_dir], callback=myCallback)
+                processes.append(r)
+            for r in processes:
+                r.wait()
+            pool.close()
             
     print('mean_img: ' + str(mean_img) + ' / ' + str(n_imgs) + ' = ' + str(mean_img / n_imgs))
     mean_img = mean_img / n_imgs
@@ -205,7 +209,6 @@ def get_datasets(
         f.write('mean_groundtruths = ' + str(mean_gt) + '\n')
         f.write('std_groundtruths = ' + str(std_gt) + '\n')
     writer.close()
-    pool.close()
 
 def prepare_dataset(configuration):
 
