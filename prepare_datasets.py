@@ -75,9 +75,11 @@ class Writer():
     
     def write(self, payload):
         if self.samples_written >= self.samples_per_file:
+            self.samples_written = 0
             self.current_writer.close()
-            fileCounter += 1
+            self.file_counter += 1
             self._create_writer()
+        self.samples_written += 1
         self.current_writer.write(payload)
 
     def close(self):
