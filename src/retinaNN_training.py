@@ -26,6 +26,7 @@ from help_functions import *
 from nn_utils import *
 from loader import load_trainset, load_images_labels
 from unet import get_unet
+from resnet import UResNet34
 
 session = K.get_session()
 

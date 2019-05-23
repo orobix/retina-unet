@@ -29,7 +29,7 @@ def visualize_samples(
 ):
 
     patches_imgs_samples = (patches_imgs_samples[0:20] + 3) * 255. / 6.
-    patches_gts_samples = tf.cast(patches_gts_samples[0:20] * 255., tf.float32)
+    patches_gts_samples = tf.cast(patches_gts_samples[0:20, 1] * 255., tf.float32)
     patches_gts_samples = tf.reshape(
         patches_gts_samples,
         (20, 1, patch_size[0], patch_size[1])
