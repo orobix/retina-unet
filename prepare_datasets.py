@@ -136,6 +136,8 @@ var_img = 0.
 mean_gt = 0.
 var_gt = 0.
 
+pool = None
+
 def get_datasets(
     dataset_path,
     n_imgs,
@@ -144,8 +146,9 @@ def get_datasets(
     borderMasks_dir,
     train_test="null"
 ):
-    global mean_img, var_img, mean_gt, var_gt, writer, new_img_size, n_subimgs, PROCESSES
-
+    global mean_img, var_img, mean_gt, var_gt, writer, new_img_size, n_subimgs, PROCESSES, pool
+    
+    pool = Pool(processes = PROCESSES, maxtasksperchild=500)
     writer = Writer(dataset_path, '', train_test, 105 * 105 * 20)
     new_img_size = (0., 0.)
     n_subimgs = 0
@@ -172,8 +175,8 @@ def get_datasets(
         new_img_size = new_image_size
         for data in payload:
             writer.write(data)
+        arguments = None
 
-    pool = Pool(processes = PROCESSES)
     processes = []
     for _, _, files in os.walk(imgs_dir): #list all files, directories in the path
         for i in range(len(files)):
@@ -202,6 +205,7 @@ def get_datasets(
         f.write('mean_groundtruths = ' + str(mean_gt) + '\n')
         f.write('std_groundtruths = ' + str(std_gt) + '\n')
     writer.close()
+    pool.close()
 
 def prepare_dataset(configuration):
 
@@ -210,16 +214,6 @@ def prepare_dataset(configuration):
     if not os.path.exists(dataset_path):
         os.makedirs(dataset_path)
     
-    #getting the testing datasets
-    get_datasets(
-        dataset_path,
-        int(configuration['N_imgs_test']),        
-        configuration['original_imgs_test'],
-        configuration['groundTruth_imgs_test'],
-        configuration['borderMasks_imgs_test'],
-        "test"
-    )
-    print("test data done!")
 
     #getting the training datasets
     get_datasets(
@@ -231,6 +225,17 @@ def prepare_dataset(configuration):
         "train"
     )
     print("train data done!")
+
+    #getting the testing datasets
+    get_datasets(
+        dataset_path,
+        int(configuration['N_imgs_test']),        
+        configuration['original_imgs_test'],
+        configuration['groundTruth_imgs_test'],
+        configuration['borderMasks_imgs_test'],
+        "test"
+    )
+    print("test data done!")
 
 def get_data(imgs, gts, subimgs, test_train):
     if test_train == 'train':
@@ -270,8 +275,8 @@ def get_data(imgs, gts, subimgs, test_train):
 
 if __name__ == '__main__':
     print("")
-    print("processing DRIVE dataset")
-    prepare_dataset(config['DRIVE'])
-    print("")
     print("processing Synth dataset")
     prepare_dataset(config['Synth'])
+    print("")
+    print("processing DRIVE dataset")
+    prepare_dataset(config['DRIVE'])
