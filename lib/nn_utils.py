@@ -16,7 +16,7 @@ def weighted_cross_entropy(weight):
 # output of the net is between -1 and 1
 # labels are between 0 and 1
 def accuracy(y_true, y_pred):
-    y = tf.cast(y_true > 0, y_true.dtype)
+    y = tf.cast(y_true > 0.5, y_true.dtype)
     y_ = tf.cast(y_pred > 0.5, y_pred.dtype)
     return K.mean(math_ops.equal(y, y_))
 
@@ -95,7 +95,7 @@ class TensorBoardOutputCallback(tf.keras.callbacks.Callback):
             images = self.model.predict(
                 self.testdata,
                 batch_size = 32)
-            images = sigmoid(images) * 255.
+            images = images * 255.
             assert(np.max(images) <= 255.)
             assert(np.min(images) >= 0.)
             images = images[:,1].astype('uint8').reshape([
