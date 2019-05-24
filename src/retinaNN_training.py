@@ -83,9 +83,9 @@ if u_net:
 
 model.compile(
     optimizer = 'sgd',
-    # loss = weighted_cross_entropy(LOSS_WEIGHT),
-    loss = 'categorical_crossentropy',
-    metrics = ['categorical_accuracy']
+    loss = weighted_cross_entropy(0.9 / 0.1),
+    # loss = 'categorical_crossentropy',
+    metrics = [accuracy, 'categorical_accuracy']
 )
 
 print("Check: final output of the network:")
