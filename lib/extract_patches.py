@@ -20,14 +20,16 @@ def _extract_patches(full_imgs, patch_size, stride_size, overlap):
 
     img_h = full_imgs.shape[2]  #height of the full image
     img_w = full_imgs.shape[3] #width of the full image
+    image_size = (img_h, img_w)
 
     # prepare padding
     img_shape = np.array(full_imgs[0,0].shape)
     patch_size = np.array(patch_size)
     if overlap:
-        residual = (img_shape - patch_size) / stride_size
-        N_patches = np.ceil((img_shape - patch_size) // stride_size + 1).astype(np.int)
+        residual = (img_shape - patch_size) % stride_size
         pad_by = np.array(stride_size) - residual
+        img_shape = img_shape + pad_by
+        N_patches = ((img_shape - patch_size) / stride_size + 1).astype(np.int)
     else:
         residual = img_shape % patch_size
         N_patches = np.ceil(img_shape / patch_size).astype(np.int)
@@ -36,7 +38,7 @@ def _extract_patches(full_imgs, patch_size, stride_size, overlap):
     needs_padding = pad_by[0] > 0 or pad_by[1] > 0
     # can be padded only on one side because border is 0 anyway
     if needs_padding:
-        pad_by = ((0, 0), (0, pad_by[0]), (0, pad_by[1])) # only pad img dont add another channel
+        pad_by_arg = ((0, 0), (0, pad_by[0]), (0, pad_by[1])) # only pad img dont add another channel
     patches_per_img = N_patches[0] * N_patches[1]
     # print("number of patches per image: " + str(patches_per_img))
     N_patches_tot = patches_per_img * full_imgs.shape[0]
@@ -47,7 +49,7 @@ def _extract_patches(full_imgs, patch_size, stride_size, overlap):
         img = full_imgs[i]
         # pad if needed
         if needs_padding:
-            img = pad(img, pad_by, 'constant', constant_values=0)
+            img = pad(img, pad_by_arg, 'constant', constant_values=0)
         
         if not overlap:
             patches_of_img = view_as_blocks(img, patch_size).reshape(patches_per_img, 1, patch_size[0], patch_size[1])
@@ -56,8 +58,7 @@ def _extract_patches(full_imgs, patch_size, stride_size, overlap):
         patches[i * patches_per_img : (i + 1) * patches_per_img] = patches_of_img.reshape(N_patches_tot, 1, patch_size[0], patch_size[1])
         iter_tot += patches_per_img
     assert (iter_tot == N_patches_tot)
-    image_size = (img_h + pad_by[1][1], img_w + pad_by[2][1])
-    return patches, image_size, patches.shape[0]  #array with all the full_imgs divided in patches
+    return patches, img_shape, patches.shape[0]  #array with all the full_imgs divided in patches
 
 def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     assert (len(preds.shape)==4)  #4D arrays
