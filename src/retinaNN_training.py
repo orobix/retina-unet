@@ -107,8 +107,7 @@ checkpointer = ModelCheckpoint(
 tensorboard = TensorBoard(
     log_dir = logdir,
     batch_size = batch_size,
-    histogram_freq = 5,
-    write_grads = True
+    histogram_freq = 5
 )
 outputCallback = TensorBoardOutputCallback(
     'images',
