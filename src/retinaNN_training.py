@@ -26,7 +26,7 @@ from help_functions import *
 from nn_utils import *
 from loader import load_trainset, load_images_labels
 from unet import get_unet
-from resnet import UResNet34
+# from resnet import UResNet34
 
 session = K.get_session()
 
@@ -78,14 +78,14 @@ test_dataset, train_dataset = load_trainset(
 #=========== Construct and save the model arcitecture ===========================
 if u_net:
     model = get_unet(1, batch_size, patch_size[0], patch_size[1])  #the U-net model
-else:
-    model = UResNet34(input_shape=(1, patch_size[0], patch_size[1]))
+# else:
+#     model = UResNet34(input_shape=(1, patch_size[0], patch_size[1]))
 
 model.compile(
     optimizer = 'sgd',
     # loss = weighted_cross_entropy(LOSS_WEIGHT),
     loss = 'categorical_crossentropy',
-    metrics = ['accuracy']
+    metrics = ['categorical_accuracy']
 )
 
 print("Check: final output of the network:")

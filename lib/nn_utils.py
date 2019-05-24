@@ -98,7 +98,7 @@ class TensorBoardOutputCallback(tf.keras.callbacks.Callback):
             images = sigmoid(images) * 255.
             assert(np.max(images) <= 255.)
             assert(np.min(images) >= 0.)
-            images = images.astype('uint8').reshape([
+            images = images[:,1].astype('uint8').reshape([
                 self.batch_size,
                 self.patch_size[0],
                 self.patch_size[1],

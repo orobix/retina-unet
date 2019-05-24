@@ -9,7 +9,7 @@ global_config.read('./global_config.txt')
 stats_parser = configparser.RawConfigParser()
 stats_parser.read('./DRIVE_datasets/stats_train.txt')
 
-subimgs_per_img = stats_parser.get('statistics', 'subimages_per_image')
+subimgs_per_img = int(stats_parser.get('statistics', 'subimages_per_image'))
 
 DRIVE_imgs_train = int(global_config.get('DRIVE', 'N_imgs_train'))
 DRIVE_imgs_test = int(global_config.get('DRIVE', 'N_imgs_test'))
@@ -27,7 +27,7 @@ imgs_to_visualize = global_config.get('global', 'imgs_to_visualize')
 
 # first is train second test
 settings = ['DRIVE', 'Synth']
-archs = ['resnet'] #['unet','resnet']
+archs = ['unet'] #['unet','resnet']
 
 for arch in archs:
   for trainset in settings:
@@ -43,6 +43,9 @@ for arch in archs:
 
     config.set('training settings', 'N_subimgs', eval(trainset + '_subimgs'))
 
+    with open('configuration.txt', "w") as f:
+      config.write(f)
+    
     ### run training
     os.system('python run_training.py')
     
@@ -52,9 +55,6 @@ for arch in archs:
     #   config.set('testing settings', 'N_subimgs', eval(testset + '_subimgs'))
     #   config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
 
-    #   with open('configuration.txt', "w") as f:
-    #     config.write(f)
 
     #   os.system('python run_testing.py')
     #   break
-    break

@@ -2,12 +2,10 @@
 path_local = ./experiments
 train_data_path = ./DRIVE_datasets/dataset__train*.tfrecord
 train_data_stats = ./DRIVE_datasets/stats_train.txt
-test_data_path = ./DRIVE_datasets/dataset__test*.tfrecord
-test_data_stats = ./DRIVE_datasets/stats_test.txt
 
 [experiment]
 name = DRIVE_DRIVE_experiment
-arch = resnet
+arch = unet
 
 [data attributes]
 patch_height = 48
@@ -29,6 +27,4 @@ average_mode = True
 stride_height = 5
 stride_width = 5
 nohup = False
-n_subimgs = 216320
-imgs_to_visualize = 20
 
