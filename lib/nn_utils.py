@@ -83,8 +83,8 @@ class ImageTensorBoard(tf.keras.callbacks.TensorBoard):
             values.append(tf.Summary.Value(tag='images input', image=img))
         summary = tf.Summary(value=values)
         with tf.Session() as sess:
-            sess.run(summary)
-            self.writer.add_summary(summary, 0)
+            s = sess.run(summary)
+            self.writer.add_summary(s, 0)
         return
 
     def on_epoch_end(self, epoch, logs={}):
@@ -108,5 +108,7 @@ class ImageTensorBoard(tf.keras.callbacks.TensorBoard):
                 img = make_image(images[i])
                 values.append(tf.Summary.Value(tag='images output', image=img))
             summary = tf.Summary(value=values)
-            self.writer.add_summary(summary, epoch)
+            with tf.Session() as sess:
+                s = sess.run(summary)                
+                self.writer.add_summary(s, epoch)
         return
