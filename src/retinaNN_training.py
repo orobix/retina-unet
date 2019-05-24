@@ -107,7 +107,8 @@ checkpointer = ModelCheckpoint(
 tensorboard = TensorBoard(
     log_dir = logdir,
     batch_size = batch_size,
-    histogram_freq = 5
+    histogram_freq = 5,
+    write_grads = True
 )
 outputCallback = TensorBoardOutputCallback(
     'images',
@@ -126,7 +127,7 @@ model.fit(
     validation_data = test_dataset,
     validation_steps = int(10),
     verbose = 2,
-    callbacks = [checkpointer, tensorboard, outputCallback])
+    callbacks = [checkpointer, outputCallback, tensorboard])
 
 
 model.fit(
