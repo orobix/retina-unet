@@ -17,7 +17,7 @@ def weighted_cross_entropy(weight):
 # labels are between 0 and 1
 def accuracy(y_true, y_pred):
     y = tf.cast(y_true > 0.5, y_true.dtype)
-    y_ = tf.cast(y_pred > 0.5, y_pred.dtype)
+    y_ = tf.cast(y_pred > 0, y_pred.dtype)
     return K.mean(math_ops.equal(y, y_))
 
 def visualize_samples(
@@ -66,36 +66,32 @@ def make_image(tensor):
 def sigmoid(x):
   return 1/(1+np.exp(-x))
 
-class TensorBoardOutputCallback(tf.keras.callbacks.Callback):
-    def __init__(self, tag, logdir, testdata, batch_size, patch_size, freq = 1):
-        super().__init__() 
-        self.tag = tag
-        self.logdir = logdir
+class ImageTensorBoard(tf.keras.callbacks.TensorBoard):
+    def __init__(self, log_dir, testdata, patch_size, **kwargs):
+        super(ImageTensorBoard, self).__init__(log_dir, **kwargs)
         self.testdata = np.array(testdata[0])
-        self.batch_size = batch_size
         self.patch_size = patch_size
-        self.freq = freq
 
     def on_train_begin(self, logs=None):
+        tf.keras.callbacks.TensorBoard.on_train_begin(self, logs=logs)
         data = self.testdata.transpose((0, 2, 3, 1))
         data = (data + 3.) * 255 / 6.
         data = data.astype('uint8')
         values = []
-        writer = tf.summary.FileWriter(self.logdir)
         for i in range(data.shape[0]):
             img = make_image(data[i])
-            values.append(tf.Summary.Value(tag=self.tag + ' input', image=img))
+            values.append(tf.Summary.Value(tag='images input', image=img))
         summary = tf.Summary(value=values)
-        writer.add_summary(summary, 0)
-        writer.close()
+        self.writer.add_summary(summary, 0)
         return
 
     def on_epoch_end(self, epoch, logs={}):
-        if epoch % self.freq == 0:
+        tf.keras.callbacks.TensorBoard.on_epoch_end(self, epoch, logs=logs)
+        if epoch % self.histogram_freq == 0:
             images = self.model.predict(
                 self.testdata,
                 batch_size = 32)
-            images = images * 255.
+            images = sigmoid(images) * 255.
             assert(np.max(images) <= 255.)
             assert(np.min(images) >= 0.)
             images = images[:,1].astype('uint8').reshape([
@@ -106,12 +102,9 @@ class TensorBoardOutputCallback(tf.keras.callbacks.Callback):
             ])
 
             values = []
-            writer = tf.summary.FileWriter(self.logdir)
             for i in range(images.shape[0]):
                 img = make_image(images[i])
-                values.append(tf.Summary.Value(tag=self.tag + ' output', image=img))
-            summary = tf.Summary(value=values)
-            writer.add_summary(summary, epoch)
-            writer.close()
-
+                values.append(tf.Summary.Value(tag='images output', image=img))
+            summary = tf.Summary(value=values)             
+            self.writer.add_summary(summary, epoch)
         return

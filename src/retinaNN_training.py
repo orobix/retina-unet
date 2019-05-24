@@ -83,9 +83,9 @@ if u_net:
 
 model.compile(
     optimizer = 'sgd',
-    # loss = weighted_cross_entropy(LOSS_WEIGHT),
-    loss = 'categorical_crossentropy',
-    metrics = ['categorical_accuracy']
+    loss = weighted_cross_entropy(0.9 / 0.1),
+    # loss = 'categorical_crossentropy',
+    metrics = [accuracy, 'categorical_accuracy']
 )
 
 print("Check: final output of the network:")
@@ -104,19 +104,19 @@ checkpointer = ModelCheckpoint(
     mode = 'auto', 
     save_best_only = True) #save at each epoch if the validation decreased
 
-tensorboard = TensorBoard(
-    log_dir = logdir,
+tensorboard = ImageTensorBoard(
+    logdir,
+    patches_embedding,
+    patch_size,
     batch_size = batch_size,
     histogram_freq = 5
 )
-outputCallback = TensorBoardOutputCallback(
-    'images',
-    logdir,
-    patches_embedding,
-    batch_size,
-    patch_size,
-    freq = 5
-)
+# outputCallback = TensorBoardOutputCallback(
+#     'images',
+#     logdir,
+#     batch_size,
+#     freq = 5
+# )
 
 model.fit(
     train_dataset,
@@ -126,7 +126,7 @@ model.fit(
     validation_data = test_dataset,
     validation_steps = int(10),
     verbose = 2,
-    callbacks = [checkpointer, outputCallback, tensorboard])
+    callbacks = [checkpointer, tensorboard])
 
 
 model.fit(
