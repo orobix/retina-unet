@@ -66,32 +66,28 @@ def make_image(tensor):
 def sigmoid(x):
   return 1/(1+np.exp(-x))
 
-class TensorBoardOutputCallback(tf.keras.callbacks.Callback):
-    def __init__(self, tag, logdir, testdata, batch_size, patch_size, freq = 1):
-        super().__init__() 
-        self.tag = tag
-        self.logdir = logdir
+class ImageTensorBoard(tf.keras.callbacks.TensorBoard):
+    def __init__(self, log_dir, testdata, patch_size, **kwargs):
+        super(ImageTensorBoard, self).__init__(log_dir, **kwargs)
         self.testdata = np.array(testdata[0])
-        self.batch_size = batch_size
         self.patch_size = patch_size
-        self.freq = freq
 
     def on_train_begin(self, logs=None):
         data = self.testdata.transpose((0, 2, 3, 1))
         data = (data + 3.) * 255 / 6.
         data = data.astype('uint8')
         values = []
-        writer = tf.summary.FileWriter(self.logdir)
         for i in range(data.shape[0]):
             img = make_image(data[i])
-            values.append(tf.Summary.Value(tag=self.tag + ' input', image=img))
+            values.append(tf.Summary.Value(tag='images input', image=img))
         summary = tf.Summary(value=values)
-        writer.add_summary(summary, 0)
-        writer.close()
+        with tf.Session() as sess:
+            sess.run(summary)
+            self.writer.add_summary(summary, 0)
         return
 
     def on_epoch_end(self, epoch, logs={}):
-        if epoch % self.freq == 0:
+        if epoch % self.histogram_freq == 0:
             images = self.model.predict(
                 self.testdata,
                 batch_size = 32)
@@ -106,12 +102,9 @@ class TensorBoardOutputCallback(tf.keras.callbacks.Callback):
             ])
 
             values = []
-            writer = tf.summary.FileWriter(self.logdir)
             for i in range(images.shape[0]):
                 img = make_image(images[i])
-                values.append(tf.Summary.Value(tag=self.tag + ' output', image=img))
+                values.append(tf.Summary.Value(tag='images output', image=img))
             summary = tf.Summary(value=values)
-            writer.add_summary(summary, epoch)
-            writer.close()
-
+            self.writer.add_summary(summary, epoch)
         return
