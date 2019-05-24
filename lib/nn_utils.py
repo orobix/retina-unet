@@ -73,6 +73,7 @@ class ImageTensorBoard(tf.keras.callbacks.TensorBoard):
         self.patch_size = patch_size
 
     def on_train_begin(self, logs=None):
+        TensorBoard.on_train_begin(self, logs=logs)
         data = self.testdata.transpose((0, 2, 3, 1))
         data = (data + 3.) * 255 / 6.
         data = data.astype('uint8')
@@ -87,6 +88,7 @@ class ImageTensorBoard(tf.keras.callbacks.TensorBoard):
         return
 
     def on_epoch_end(self, epoch, logs={}):
+        TensorBoard.on_epoch_end(self, epoch, logs=logs)
         if epoch % self.histogram_freq == 0:
             images = self.model.predict(
                 self.testdata,

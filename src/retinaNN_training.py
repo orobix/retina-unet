@@ -105,7 +105,7 @@ checkpointer = ModelCheckpoint(
     save_best_only = True) #save at each epoch if the validation decreased
 
 tensorboard = ImageTensorBoard(
-    log_dir = logdir,
+    logdir,
     patches_embedding,
     patch_size,
     batch_size = batch_size,
@@ -126,7 +126,7 @@ model.fit(
     validation_data = test_dataset,
     validation_steps = int(10),
     verbose = 2,
-    callbacks = [checkpointer, tensorboard, outputCallback])
+    callbacks = [checkpointer, tensorboard])
 
 
 model.fit(
