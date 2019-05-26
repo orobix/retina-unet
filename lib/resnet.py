@@ -1,5 +1,9 @@
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate, Activation
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Concatenate, Activation, BatchNormalization, add
 from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import l2
+import tensorflow.keras.backend as K
+
+import six
 
 #============Build U-Net Model=================
 def handle_block_names(stage):
@@ -20,7 +24,7 @@ def Upsample2D_block(filters, stage, kernel_size=(3,3), upsample_rate=(2,2),
         x = UpSampling2D(size=upsample_rate, name=up_name)(input_tensor)
 
         if skip is not None:
-            #print("x: "+str(x.shape)+"\nskip: "+str(skip.shape))
+            print("x: "+str(x.shape)+"\nskip: "+str(skip.shape))
             x = Concatenate()([x, skip])
 
         x = Conv2D(filters, kernel_size, padding='same', name=conv_name+'1')(x)
@@ -214,14 +218,9 @@ def _handle_dim_ordering():
     global ROW_AXIS
     global COL_AXIS
     global CHANNEL_AXIS
-    if K.image_dim_ordering() == 'tf':
-        ROW_AXIS = 1
-        COL_AXIS = 2
-        CHANNEL_AXIS = 3
-    else:
-        CHANNEL_AXIS = 1
-        ROW_AXIS = 2
-        COL_AXIS = 3
+    ROW_AXIS = 1
+    COL_AXIS = 2
+    CHANNEL_AXIS = 3
 
 
 def _get_block(identifier):
@@ -235,28 +234,21 @@ def _get_block(identifier):
 
 class ResnetBuilder(object):
     @staticmethod
-    def build(input_shape, block_fn, repetitions,input_tensor):
+    def build(input_shape, block_fn, repetitions, input_tensor):
         _handle_dim_ordering()
         if len(input_shape) != 3:
             raise Exception("Input shape should be a tuple (nb_channels, nb_rows, nb_cols)")
 
         # Permute dimension order if necessary
-        if K.image_dim_ordering() == 'tf':
-            input_shape = (input_shape[1], input_shape[2], input_shape[0])
+        input_shape = (input_shape[1], input_shape[2], input_shape[0])
 
         # Load function from str if needed.
         block_fn = _get_block(block_fn)
         
-        if input_tensor is None:
-            img_input = Input(shape=input_shape)
-        else:
-            if not K.is_keras_tensor(input_tensor):
-                img_input = Input(tensor=input_tensor, shape=input_shape)
-            else:
-                img_input = input_tensor
+        img_input = Input(shape = input_shape)
                 
-        conv1 = _conv_bn_relu(filters=64, kernel_size=(7, 7), strides=(2, 2))(img_input)
-        pool1 = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")(conv1)
+        conv1 = _conv_bn_relu(filters = 64, kernel_size = (7, 7), strides = (2, 2))(img_input)
+        pool1 = MaxPooling2D(pool_size = (3, 3), strides = (2, 2), padding="same")(conv1)
 
         block = pool1
         filters = 64
@@ -271,15 +263,15 @@ class ResnetBuilder(object):
         return model
 
     @staticmethod
-    def build_resnet_34(input_shape,input_tensor):
-        return ResnetBuilder.build(input_shape, basic_block, [3, 4, 6, 3],input_tensor)
+    def build_resnet_34(input_shape, input_tensor):
+        return ResnetBuilder.build(input_shape, basic_block, [3, 4, 6, 3], input_tensor)
 
 
 #=============U-Net with ResNet34 Encoder============
 def UResNet34(input_shape=(None, None, 3), classes=1, decoder_filters=16, decoder_block_type='upsampling',
                        encoder_weights=None, input_tensor=None, activation='sigmoid', **kwargs):
 
-    backbone = ResnetBuilder.build_resnet_34(input_shape=input_shape, input_tensor=input_tensor)
+    backbone = ResnetBuilder.build_resnet_34(input_shape = input_shape, input_tensor = input_tensor)
     
     skip_connections = list([97,54,25])  # for resnet 34
     #print("sc done")

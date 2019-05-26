@@ -5,7 +5,7 @@ train_data_stats = ./DRIVE_datasets/stats_train.txt
 
 [experiment]
 name = DRIVE_DRIVE_experiment
-arch = unet
+arch = resnet
 
 [data attributes]
 patch_height = 48
@@ -18,7 +18,7 @@ patches_per_img = 10816
 n_epochs = 150
 batch_size = 32
 nohup = False
-n_subimgs = 216320
+n_subimgs = 220500
 
 [testing settings]
 best_last = best
