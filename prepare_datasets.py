@@ -24,7 +24,7 @@ config.read('./global_config.txt')
 height = 565
 width = 565
 
-PROCESSES = 8
+PROCESSES = 1
 
 patch_h = int(config.get('data attributes', 'patch_height'))
 patch_w = int(config.get('data attributes', 'patch_width'))
@@ -114,7 +114,6 @@ def process_img(i, filename, imgs_dir, groundTruth_dir):
     var_gt = np.var(gt_data)
 
     payload = []
-
     for j in range(img_data.shape[0]):
         encoded_img_string = cv2.imencode('.png', img_data[j])[1].tostring()
         encoded_gt_string = cv2.imencode('.png', gt_data[j])[1].tostring()
@@ -186,7 +185,7 @@ def get_datasets(
             fr = i * 1000
             to = min(i * 1000 + batch_size, len(files))
             for j in range(fr, to):
-                r = pool.apply_async(process_img, [j, files[j], imgs_dir, groundTruth_dir], callback=myCallback)
+                r = pool.apply_async(process_img, [j, files[j], imgs_dir, groundTruth_dir], callback=myCallback, error_callback=print)
                 processes.append(r)
             for r in processes:
                 r.wait()

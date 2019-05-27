@@ -4,8 +4,8 @@ train_data_path = ./Synth_datasets/dataset__train*.tfrecord
 train_data_stats = ./Synth_datasets/stats_train.txt
 
 [experiment]
-name = Synth_DRIVE_experiment
-arch = unet
+name = DRIVE_DRIVE_experiment
+arch = resnet
 
 [data attributes]
 patch_height = 48
