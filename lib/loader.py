@@ -32,7 +32,7 @@ def load_trainset(filepath, batch_size, N_imgs, shuffle=True):
     # do not reshuffle each iteration
     print(N_imgs)
     if shuffle:
-        dataset = dataset.shuffle(N_imgs)
+        dataset = dataset.shuffle(500000)
 
     # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
     dataset = dataset.map(_parse_function, num_parallel_calls=8) \
