@@ -1,11 +1,11 @@
 [data paths]
 path_local = ./experiments
-train_data_path = ./Synth_datasets/dataset__train*.tfrecord
-train_data_stats = ./Synth_datasets/stats_train.txt
+train_data_path = ./DRIVE_datasets/dataset__train*.tfrecord
+train_data_stats = ./DRIVE_datasets/stats_train.txt
 
 [experiment]
 name = DRIVE_DRIVE_experiment
-arch = resnet
+arch = unet
 
 [data attributes]
 patch_height = 48
@@ -18,7 +18,7 @@ patches_per_img = 10816
 n_epochs = 150
 batch_size = 32
 nohup = False
-n_subimgs = 97344000
+n_subimgs = 220500
 
 [testing settings]
 best_last = best

@@ -24,7 +24,7 @@ config.read('./global_config.txt')
 height = 565
 width = 565
 
-PROCESSES = 1
+PROCESSES = 8
 
 patch_h = int(config.get('data attributes', 'patch_height'))
 patch_w = int(config.get('data attributes', 'patch_width'))
@@ -70,7 +70,7 @@ class Writer():
             self.train_test,
             self.file_counter
         )
-        print('create new writer: ' + path)
+        # print('create new writer: ' + path)
         self.current_writer = tf.python_io.TFRecordWriter(path)
     
     def write(self, payload):

@@ -27,7 +27,7 @@ imgs_to_visualize = global_config.get('global', 'imgs_to_visualize')
 
 # first is train second test
 settings = ['DRIVE', 'Synth']
-archs = ['resnet'] #['unet','resnet']
+archs = ['unet'] #['unet','resnet']
 
 for arch in archs:
   for trainset in settings:
@@ -47,7 +47,7 @@ for arch in archs:
       config.write(f)
     
     ### run training
-    os.system('python3 run_training.py')
+    os.system('python run_training.py')
     
     # for testset in settings:
     #   config.set('data paths', 'test_data_path', './' + testset + '_datasets/dataset__test*.tfrecord')
@@ -56,5 +56,5 @@ for arch in archs:
     #   config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
 
 
-    #   os.system('python3 run_testing.py')
+    #   os.system('python run_testing.py')
     break
