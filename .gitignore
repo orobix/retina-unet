@@ -10,3 +10,5 @@ Synth*
 *.hdf5
 *.tfrecord
 experiments
+*.h5 
+*.png
