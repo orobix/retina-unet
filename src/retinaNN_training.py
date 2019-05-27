@@ -84,8 +84,8 @@ else:
 
 model.compile(
     optimizer = 'sgd',
-    # loss = weighted_cross_entropy(0.9 / 0.1),
-    loss = 'categorical_crossentropy',
+    loss = weighted_cross_entropy(0.9 / 0.1),
+    # loss = 'categorical_crossentropy',
     metrics = [accuracy]
 )
 

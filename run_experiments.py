@@ -34,7 +34,7 @@ for arch in archs:
     config = configparser.RawConfigParser()
     config.read('./configuration_template.txt')
     ### write config
-    experiment = trainset + '_DRIVE_experiment'
+    experiment = trainset + '_training'
     config.set('experiment', 'name', experiment)
     config.set('experiment', 'arch', arch)
     
@@ -49,12 +49,16 @@ for arch in archs:
     ### run training
     os.system('python run_training.py')
     
-    # for testset in settings:
-    #   config.set('data paths', 'test_data_path', './' + testset + '_datasets/dataset__test*.tfrecord')
-    #   config.set('data paths', 'test_data_stats', './' + testset + '_datasets/stats_test.txt')
-    #   config.set('testing settings', 'N_subimgs', eval(testset + '_subimgs'))
-    #   config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
+    for testset in settings:
+      config.set('experiment', 'testset', experiment)
+      config.set('data paths', 'test_data_path', './' + testset + '_datasets/dataset__test*.tfrecord')
+      config.set('data paths', 'test_data_stats', './' + testset + '_datasets/stats_test.txt')
+      config.set('testing settings', 'N_subimgs', eval(testset + '_subimgs'))
+      config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
+      
+      with open('configuration.txt', "w") as f:
+        config.write(f)
 
-
-    #   os.system('python run_testing.py')
+      os.system('python run_testing.py')
+      break
     break

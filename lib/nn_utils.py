@@ -10,6 +10,7 @@ from help_functions import visualize, group_images
 
 def weighted_cross_entropy(weight):
     def loss(y_true, y_pred):
+        y_pred += 1e-10 # numerical issues
         return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, weight)
     return loss
 
@@ -19,6 +20,7 @@ def accuracy(y_true, y_pred):
     y = tf.cast(y_true > 0.5, y_true.dtype)
     y_ = tf.cast(y_pred > 0, y_pred.dtype)
     return K.mean(math_ops.equal(y, y_))
+
 
 def visualize_samples(
     session,

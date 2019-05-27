@@ -25,14 +25,14 @@ def load_testset(filepath, batch_size):
 
 
 
-def load_trainset(filepath, batch_size, N_imgs, shuffle=True):
+def load_trainset(filepath, batch_size, N_imgs):
     dataset = tf.data.TFRecordDataset(glob.glob(filepath))
     
     # Set the number of datapoints you want to load and shuffle
     # do not reshuffle each iteration
+    print('total samples:')
     print(N_imgs)
-    if shuffle:
-        dataset = dataset.shuffle(500000)
+    dataset = dataset.shuffle(500000)
 
     # Maps the parser on every filepath in the array. You can set the number of parallel loaders here
     dataset = dataset.map(_parse_function, num_parallel_calls=8) \
@@ -52,8 +52,11 @@ def load_trainset(filepath, batch_size, N_imgs, shuffle=True):
 
 
 
-def load_images_labels(filepath, batch_size, N_imgs, shuffle=True):    
-    test_data, train_data = load_trainset(filepath, batch_size, N_imgs, shuffle)
+def load_images_labels(filepath, batch_size, N_imgs, test=False):
+    if test:
+        test_data, train_data = load_testset(filepath, batch_size)
+    else:
+        test_data, train_data = load_trainset(filepath, batch_size, N_imgs)
     
     # Create an iterator
     iterator = train_data.make_one_shot_iterator()
