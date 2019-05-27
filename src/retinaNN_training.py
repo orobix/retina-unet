@@ -64,7 +64,8 @@ patches_imgs_samples, patches_gts_samples = load_images_labels(
     )
 
 patches_embedding = patches_imgs_samples[:32]
-patches_embedding = session.run([patches_embedding])
+patches_embedding_gt = tf.reshape(patches_gts_samples[:32, 1], (32, 1, patch_size[0], patch_size[1]))
+patches_embedding, patches_embedding_gt = session.run([patches_embedding, patches_embedding_gt])
 
 visualize_samples(session, experiment_path, patches_imgs_samples, patches_gts_samples, patch_size)
 
@@ -83,9 +84,9 @@ else:
 
 model.compile(
     optimizer = 'sgd',
-    loss = weighted_cross_entropy(0.9 / 0.1),
-    # loss = 'categorical_crossentropy',
-    metrics = [accuracy, 'categorical_accuracy']
+    # loss = weighted_cross_entropy(0.9 / 0.1),
+    loss = 'categorical_crossentropy',
+    metrics = [accuracy]
 )
 
 print("Check: final output of the network:")
@@ -107,34 +108,18 @@ checkpointer = ModelCheckpoint(
 tensorboard = ImageTensorBoard(
     logdir,
     patches_embedding,
+    patches_embedding_gt,
     patch_size,
     batch_size = batch_size,
     histogram_freq = 5
 )
-# outputCallback = TensorBoardOutputCallback(
-#     'images',
-#     logdir,
-#     batch_size,
-#     freq = 5
-# )
-
-model.fit(
-    train_dataset,
-    epochs = N_epochs,
-    steps_per_epoch = int(N_subimgs / batch_size),
-    # steps_per_epoch = 1,
-    validation_data = test_dataset,
-    validation_steps = int(10),
-    verbose = 2,
-    callbacks = [checkpointer, tensorboard])
-
 
 model.fit(
     train_dataset,
     epochs = N_epochs,
     steps_per_epoch = int(N_subimgs / batch_size),
     validation_data = test_dataset,
-    validation_steps = int(10),
+    validation_steps = 10,
     verbose = 2,
     callbacks = [checkpointer, tensorboard])
 

@@ -67,20 +67,26 @@ def sigmoid(x):
   return 1/(1+np.exp(-x))
 
 class ImageTensorBoard(tf.keras.callbacks.TensorBoard):
-    def __init__(self, log_dir, testdata, patch_size, **kwargs):
+    def __init__(self, log_dir, testdata, testdata_gts, patch_size, **kwargs):
         super(ImageTensorBoard, self).__init__(log_dir, **kwargs)
-        self.testdata = np.array(testdata[0])
+        self.testdata = np.array(testdata)
+        self.testdata_gts = np.array(testdata_gts)
         self.patch_size = patch_size
 
     def on_train_begin(self, logs=None):
         tf.keras.callbacks.TensorBoard.on_train_begin(self, logs=logs)
         data = self.testdata.transpose((0, 2, 3, 1))
+        gt_data = self.testdata_gts.transpose((0, 2, 3, 1))
         data = (data + 3.) * 255 / 6.
+        gt_data = gt_data * 255.
         data = data.astype('uint8')
+        gt_data = gt_data.astype('uint8')
         values = []
         for i in range(data.shape[0]):
             img = make_image(data[i])
+            img_gt = make_image(gt_data[i])
             values.append(tf.Summary.Value(tag='images input', image=img))
+            values.append(tf.Summary.Value(tag='images groundtruth', image=img_gt))
         summary = tf.Summary(value=values)
         self.writer.add_summary(summary, 0)
         return
