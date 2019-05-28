@@ -273,13 +273,13 @@ def UResNet34(input_shape=(None, None, 3), classes=1, decoder_filters=16, decode
 
     backbone = ResnetBuilder.build_resnet_34(input_shape = input_shape, input_tensor = input_tensor)
     
-    skip_connections = list([97,54,25])  # for resnet 34
+    skip_connections = list([])#([97,54,25])  # for resnet 34
     #print("sc done")
     model = build_unet(backbone, classes, decoder_filters,
                        skip_connections, block_type=decoder_block_type,
                        activation=activation, **kwargs)
     #print("bu done")
-    model.name = 'u-resnet34'
+    model._name = 'u-resnet34'
 
     return model
 
