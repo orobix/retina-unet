@@ -23,10 +23,9 @@ from help_functions import *
 from loader import load_testset
 from extract_patches import recompone
 from extract_patches import recompone_overlap
+from nn_utils import *
 
 session = K.get_session()
-def weighted_cross_entropy(y_true, y_pred):
-    return tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, 1.)
 
 #========= CONFIG FILE TO READ FROM =======
 config = configparser.RawConfigParser()
@@ -38,8 +37,8 @@ test_data_stats = config.get('data paths', 'test_data_stats')
 
 stats_config = configparser.RawConfigParser()
 stats_config.read(test_data_stats)
-full_img_height = int(config.get('statistics', 'new_image_height'))
-full_img_width = int(config.get('statistics', 'new_image_width'))
+full_img_height = int(stats_config.get('statistics', 'new_image_height'))
+full_img_width = int(stats_config.get('statistics', 'new_image_width'))
 
 # dimension of the patches
 patch_size = (int(config.get('data attributes', 'patch_height')), int(config.get('data attributes', 'patch_width')))
@@ -67,16 +66,25 @@ batch_size = int(config.get('training settings', 'batch_size'))
 
 #================= Load the data =====================================================
 dataset = load_testset(test_data_path, batch_size)
-patches_imgs_samples, patches_gts_samples = load_images_labels(
-        test_data_path,
-        batch_size,
-        N_subimgs,
-        test = True
-    )
+iterator = dataset.make_one_shot_iterator()
 
-patches_embedding = patches_imgs_samples[:patches_per_img * imgs_to_visualize]
-patches_embedding_gt = tf.reshape(patches_gts_samples[:patches_per_img * imgs_to_visualize, 1], (patches_per_img * imgs_to_visualize, 1, patch_size[0], patch_size[1]))
-patches_embedding, patches_embedding_gt = session.run([patches_embedding, patches_embedding_gt])
+# n_samples = int(patches_per_img * imgs_to_visualize)
+# batches = int(np.ceil(n_samples / batch_size))
+# patches_embedding = np.zeros((batches * batch_size, 1, patch_size[0], patch_size[1]))
+# patches_embedding_gt = np.zeros((batches * batch_size, 1, patch_size[0], patch_size[1]))
+
+# batch_img, batch_gt = iterator.get_next()
+# print('loading visualization data')
+# for i in range(batches):
+#     if i % 50 == 0:
+#         print(str(i) + ' / ' + str(batches))
+#     batch_gt_np = tf.reshape(batch_gt[:, 1], (batch_size, 1, patch_size[0], patch_size[1]))
+#     batch_img_np, batch_gt_np = session.run([batch_img, batch_gt_np])
+#     patches_embedding[i * batch_size: i * batch_size + batch_size] = batch_img_np
+#     patches_embedding_gt[i * batch_size: i * batch_size + batch_size] = batch_gt_np
+
+# patches_embedding = patches_embedding[:n_samples]
+# patches_embedding_gt = patches_gts_samples[:n_samples]
 
 #================ Run the prediction of the patches ==================================
 best_last = config.get('testing settings', 'best_last')
@@ -87,10 +95,10 @@ model = model_from_json(
 )
 model.compile(
     optimizer = 'sgd',
-    loss = weighted_cross_entropy,
+    loss = weighted_cross_entropy(9),
     metrics = [
-        tf.keras.metrics.SensitivityAtSpecificity(), # auc roc
-        tf.keras.metrics.SpecificityAtSensetivity(), # auc roc
+        # tf.keras.metrics.SensitivityAtSpecificity(), # auc roc
+        # tf.keras.metrics.SpecificityAtSensetivity(), # auc roc
         tf.keras.metrics.TruePositives(),
         tf.keras.metrics.FalsePositives(),
         tf.keras.metrics.TrueNegatives(),
@@ -101,11 +109,11 @@ model.load_weights(experiment_path + '/' + name_experiment + '_' + best_last + '
 
 print("start prediction")
 #Calculate the predictions
-predictions = model.predict(
+predictions = sigmoid(model.predict(
     dataset,
     batch_size = batch_size,
     steps = int(N_subimgs / batch_size)
-)
+))
 
 print("predicted images size :")
 print(predictions.shape)
@@ -126,49 +134,49 @@ pred_imgs = recompone_overlap(
     stride_size[0],
     stride_size[1]
 ) * 255
-orig_imgs = recompone_overlap(
-    patches_embedding,
-    full_img_height,
-    full_img_width,
-    stride_size[0],
-    stride_size[1]
-) * 255
-gtruth_masks = recompone_overlap(
-    patches_embedding_gt,
-    full_img_height,
-    full_img_width,
-    stride_size[0],
-    stride_size[1]
-) * 255
+# orig_imgs = recompone_overlap(
+#     patches_embedding,
+#     full_img_height,
+#     full_img_width,
+#     stride_size[0],
+#     stride_size[1]
+# ) * 255
+# gtruth_masks = recompone_overlap(
+#     patches_embedding_gt,
+#     full_img_height,
+#     full_img_width,
+#     stride_size[0],
+#     stride_size[1]
+# ) * 255
 
-print("Orig imgs shape: " +str(orig_imgs.shape))
+# print("Orig imgs shape: " +str(orig_imgs.shape))
 print("pred imgs shape: " +str(pred_imgs.shape))
-print("Gtruth imgs shape: " +str(gtruth_masks.shape))
-visualize(group_images(orig_imgs, N_visual), save_path + "_all_originals")#.show()
+# print("Gtruth imgs shape: " +str(gtruth_masks.shape))
+# visualize(group_images(orig_imgs, N_visual), save_path + "_all_originals")#.show()
 visualize(group_images(pred_imgs, N_visual), save_path + "_all_predictions")#.show()
-visualize(group_images(gtruth_masks,N_visual), save_path + "_all_groundTruths")#.show()
+# visualize(group_images(gtruth_masks,N_visual), save_path + "_all_groundTruths")#.show()
 #visualize results comparing mask and prediction:
-assert (orig_imgs.shape[0]==pred_imgs.shape[0] and orig_imgs.shape[0]==gtruth_masks.shape[0])
-N_predicted = orig_imgs.shape[0]
-group = N_visual
-assert (N_predicted%group==0)
-for i in range(int(N_predicted/group)):
-    fr = i * group
-    to = i * group + group
-    orig_stripe =  group_images(orig_imgs[fr: to], group)
-    masks_stripe = group_images(gtruth_masks[fr: to], group)
-    pred_stripe =  group_images(pred_imgs[fr: to], group)
-    total_img = np.concatenate((orig_stripe, masks_stripe, pred_stripe), axis=0)
-    visualize(total_img, save_path + "_Original_GroundTruth_Prediction" + str(i))#.show()
+# assert (orig_imgs.shape[0]==pred_imgs.shape[0] and orig_imgs.shape[0]==gtruth_masks.shape[0])
+# N_predicted = orig_imgs.shape[0]
+# group = N_visual
+# assert (N_predicted%group==0)
+# for i in range(int(N_predicted/group)):
+#     fr = i * group
+#     to = i * group + group
+#     orig_stripe =  group_images(orig_imgs[fr: to], group)
+#     masks_stripe = group_images(gtruth_masks[fr: to], group)
+#     pred_stripe =  group_images(pred_imgs[fr: to], group)
+#     total_img = np.concatenate((orig_stripe, masks_stripe, pred_stripe), axis=0)
+#     visualize(total_img, save_path + "_Original_GroundTruth_Prediction" + str(i))#.show()
 
 #========================== Evaluate the results ===================================
 print("\n\n========  Evaluate the results =======================")
 
-sensitivities, \ 
-specificities, \
-true_positives, \
-false_positives, \
-true_negatives, \
+sensitivities,
+specificities,
+true_positives,
+false_positives,
+true_negatives,
 false_negatives = model.evaluate(
     dataset,
     batch_size = batch_size,

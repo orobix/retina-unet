@@ -120,7 +120,7 @@ model.fit(
     steps_per_epoch = int(N_subimgs / batch_size),
     validation_data = test_dataset,
     validation_steps = 10,
-    verbose = 2,
+    verbose = 1,
     callbacks = [checkpointer, tensorboard])
 
 #========== Save and test the last model ==================================

@@ -26,7 +26,7 @@ Synth_testimgs = subimgs_per_img * Synth_imgs_test
 imgs_to_visualize = global_config.get('global', 'imgs_to_visualize')
 
 # first is train second test
-settings = ['DRIVE', 'Synth']
+settings = ['Synth']
 archs = ['unet'] #['unet','resnet']
 
 for arch in archs:
@@ -53,7 +53,7 @@ for arch in archs:
       config.set('experiment', 'testset', experiment)
       config.set('data paths', 'test_data_path', './' + testset + '_datasets/dataset__test*.tfrecord')
       config.set('data paths', 'test_data_stats', './' + testset + '_datasets/stats_test.txt')
-      config.set('testing settings', 'N_subimgs', eval(testset + '_subimgs'))
+      config.set('testing settings', 'N_subimgs', eval(testset + '_testimgs'))
       config.set('testing settings', 'imgs_to_visualize', imgs_to_visualize)
       
       with open('configuration.txt', "w") as f:
