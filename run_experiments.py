@@ -26,7 +26,7 @@ Synth_testimgs = subimgs_per_img * Synth_imgs_test
 imgs_to_visualize = global_config.get('global', 'imgs_to_visualize')
 
 # first is train second test
-settings = ['Synth']
+settings = ['Synth', 'DRIVE']
 archs = ['unet'] #['unet','resnet']
 
 for arch in archs:

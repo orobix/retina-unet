@@ -83,7 +83,7 @@ else:
     model = UResNet34(input_shape=(1, patch_size[0], patch_size[1]))
 
 model.compile(
-    optimizer = 'sgd',
+    optimizer = 'adam',
     loss = weighted_cross_entropy(0.9 / 0.1),
     # loss = 'categorical_crossentropy',
     metrics = [accuracy]
@@ -117,7 +117,7 @@ tensorboard = ImageTensorBoard(
 model.fit(
     train_dataset,
     epochs = N_epochs,
-    steps_per_epoch = int(N_subimgs / batch_size),
+    steps_per_epoch = min(int(N_subimgs / batch_size), 10000),
     validation_data = test_dataset,
     validation_steps = 10,
     verbose = 1,
