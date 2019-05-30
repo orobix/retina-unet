@@ -65,8 +65,8 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
     assert (preds.shape[1]==1 or preds.shape[1]==3)  #check the channel is 1 or 3
     patch_h = preds.shape[2]
     patch_w = preds.shape[3]
-    N_patches_h = (img_h - patch_h) // stride_h
-    N_patches_w = (img_w - patch_w) // stride_w
+    N_patches_h = (img_h - patch_h) // stride_h + 1
+    N_patches_w = (img_w - patch_w) // stride_w + 1
     N_patches_img = N_patches_h * N_patches_w
     print("N_patches_h: " +str(N_patches_h))
     print("N_patches_w: " +str(N_patches_w))
@@ -80,11 +80,12 @@ def recompone_overlap(preds, img_h, img_w, stride_h, stride_w):
 
     k = 0 #iterator over all the patches
     for i in range(N_full_imgs):
-        for h in range((img_h-patch_h)//stride_h):
-            for w in range((img_w-patch_w)//stride_w):
+        for h in range(N_patches_h):
+            for w in range(N_patches_w):
                 full_prob[i,:, h * stride_h: h * stride_h + patch_h, w * stride_w: w * stride_w + patch_w] += preds[k]
                 full_sum[i, :, h * stride_h: h * stride_h + patch_h, w * stride_w: w * stride_w + patch_w] += 1
                 k += 1
+
     assert(k==preds.shape[0])
     print(np.max(full_prob))
     print(np.max(full_sum))
