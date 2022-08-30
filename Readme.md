@@ -75,6 +75,14 @@ The following dependencies are needed:
 - ConfigParser >=3.5.0b2
 - scikit-learn >= 0.17.1
 
+Version used
+- python3 = 3.9.13
+- numpy = 1.19.5
+- PIL =8.2.0
+- opencv =4.5.2
+- h5py =3.1.0
+- configparser =3.10.6
+- scikit-learn = 0.24.2
 
 Also, you will need the DRIVE database, which can be freely downloaded as explained in the next section.
 
